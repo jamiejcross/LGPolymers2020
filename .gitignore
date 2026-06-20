@@ -1,0 +1,6 @@
+# generated single-file build (reproduce with: python3 rebuild.py)
+lg_polymers_release_sim_complete.html
+# original self-contained source build (kept locally, not published)
+lg_polymers_release_sim_v34.html
+.claude/
+.DS_Store
