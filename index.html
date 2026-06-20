@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>LG Polymers, Visakhapatnam — Styrene Release Reconstruction (v33-phenomenological)</title>
+<title>LG Polymers, Visakhapatnam — Styrene Release Reconstruction (v35-reach-experimental)</title>
 <style>
   :root {
     --panel-bg: rgba(16, 22, 28, 0.78);
@@ -86,17 +86,6 @@
   <h1>LG Polymers &amp; Surroundings</h1>
   <div class="sub">Visakhapatnam, Andhra Pradesh<br>17.741&ndash;17.779&deg;N &middot; 83.187&ndash;83.237&deg;E</div>
 
-  <div class="sect">Layers</div>
-  <label class="layer"><input type="checkbox" id="tgl-terrain" checked><span class="swatch" style="background:#b9a87e"></span><span class="lbl">Terrain</span></label>
-  <label class="layer"><input type="checkbox" id="tgl-sat"><span class="swatch" style="background:linear-gradient(135deg,#4e6b41,#8c8273)"></span><span class="lbl">Satellite imagery</span></label>
-  <label class="layer"><input type="checkbox" id="tgl-buildings" checked><span class="swatch" style="background:#d6cfc2"></span><span class="lbl">Buildings</span></label>
-  <label class="layer"><input type="checkbox" id="tgl-water" checked><span class="swatch" style="background:#5f9ec7"></span><span class="lbl">Water</span></label>
-  <label class="layer"><input type="checkbox" id="tgl-lg" checked><span class="swatch" style="background:#d65108"></span><span class="lbl">LG Polymers ward</span></label>
-  <label class="layer"><input type="checkbox" id="tgl-aegl" checked><span class="swatch" style="background:#9fb0bd"></span><span class="lbl">Exposure thresholds (AEGL)</span></label>
-  <label class="layer"><input type="checkbox" id="tgl-densegas"><span class="swatch" style="background:linear-gradient(90deg,#000004,#b6377a,#fca50a,#fcffa4)"></span><span class="lbl">Dense-gas layer (Stage D)</span></label>
-  <label class="layer"><input type="checkbox" id="tgl-windfield"><span class="swatch" style="background:#7fd1e0"></span><span class="lbl">Wind field (terrain-steered)</span></label>
-  <label class="layer" style="display:none"><input type="checkbox" id="tgl-overlay" disabled><span class="swatch"></span><span class="lbl">Temperature overlay</span></label>
-
   <div class="sect">Sun &middot; time of day</div>
   <div class="slider-row">
     <span id="sun-icon">&#9728;&#65039;</span>
@@ -106,6 +95,18 @@
 
   <div class="sect">Visual quality</div>
   <label class="layer"><input type="checkbox" id="tgl-photoreal"><span class="swatch" style="background:linear-gradient(135deg,#3a4452,#cfe0f0)"></span><span class="lbl">Photorealism (AO &middot; bloom &middot; haze)</span></label>
+
+  <div class="sect">Layers</div>
+  <label class="layer"><input type="checkbox" id="tgl-terrain" checked><span class="swatch" style="background:#b9a87e"></span><span class="lbl">Terrain</span></label>
+  <label class="layer"><input type="checkbox" id="tgl-sat"><span class="swatch" style="background:linear-gradient(135deg,#4e6b41,#8c8273)"></span><span class="lbl">Satellite imagery</span></label>
+  <label class="layer"><input type="checkbox" id="tgl-buildings" checked><span class="swatch" style="background:#d6cfc2"></span><span class="lbl">Buildings</span></label>
+  <label class="layer"><input type="checkbox" id="tgl-water" checked><span class="swatch" style="background:#5f9ec7"></span><span class="lbl">Water</span></label>
+  <label class="layer"><input type="checkbox" id="tgl-lg" checked><span class="swatch" style="background:#d65108"></span><span class="lbl">LG Polymers ward</span></label>
+  <label class="layer"><input type="checkbox" id="tgl-aegl" checked><span class="swatch" style="background:#9fb0bd"></span><span class="lbl">Concentric rings (AEGL exposure)</span></label>
+  <label class="layer"><input type="checkbox" id="tgl-maplabels" checked><span class="swatch" style="background:#cfe0f5"></span><span class="lbl">Map labels &amp; markers</span></label>
+  <label class="layer"><input type="checkbox" id="tgl-densegas"><span class="swatch" style="background:linear-gradient(90deg,#000004,#b6377a,#fca50a,#fcffa4)"></span><span class="lbl">Dense-gas layer (Stage D)</span></label>
+  <label class="layer"><input type="checkbox" id="tgl-windfield"><span class="swatch" style="background:#7fd1e0"></span><span class="lbl">Wind field (terrain-steered)</span></label>
+  <label class="layer" style="display:none"><input type="checkbox" id="tgl-overlay" disabled><span class="swatch"></span><span class="lbl">Temperature overlay</span></label>
 
   <!-- v25: LST-overlay loader kept (hidden) so its drag/drop JS stays valid; replaced by Heat & exposure -->
   <div style="display:none">
@@ -189,25 +190,33 @@
    (2) an 11,000 ppm LEL flammability screen (Doc 02 §5.1.8); (3) a 4-/8-h AEGL-3 lethal contour at
    340 ppm (the multi-hour LOC, ~2x the 60-min zone) per the Doc 02 §1 AEGL table; (4) the AEGL-1
    zone drawn as the reported 2.5-3.6 km band, not a single ring (Doc 03 §5.6). SLAB engine still frozen.
-   v33-phenomenological — recovering v28's appearance in v29 WITHOUT re-adding v28's hand-tuned heuristics
-   (memo 09). Each phenomenological feature is recovered by promoting the fudge it stood in for into the
-   mechanism it was silently approximating. All additions live DOWNSTREAM of the frozen SLAB (they extend
-   the crosswind PROJECTION of the field only), so the calibrated core, the threat-zone distances, the
-   FLEXPART/AEGL anchors and every self-test input are untouched — self-test stays 44/44 by construction.
-     (2) Lateral gravity spreading replaces the TAPER_W crosswind fudge: the dense-core crosswind half-width
-         is now b(x), the SLAB's OWN gravity half-width grown by dW/dt = SLAB_CE·√(g'h) (the same frozen law
-         that drives the along-wind front; SLAB_CE=1.0 is k_y, Britter–McQuaid). TAPER_W is DELETED.
-     (1) Dense→passive transition: once the bulk Richardson number Ri=g'h/u² drops below the dense band the
-         cloud goes passive and balloons laterally, recovering the far-field breadth v29 had lost.
-     (4) Edge halo: the passive broadening is a Pasquill–Gifford σ_y(x) keyed to the met-record stability
-         class (E/F, class-F Briggs rural PG_KY) — a declared input, no new free constant.
-     (3) Mass conservation on the projection: the crosswind peak is renormalised by b/σ_eff so ∫c dy keeps
-         the 1-D slab line density — the dense-core profile is byte-identical to v31, the far field widens
-         and dilutes on-axis honestly, and a reviewer can check the integral.
-   Provenance ledger (memo 09): far-field breadth ← Ri_c transition (RI_DENSE_LO/HI); near/mid breadth ←
-   b(x) from dW/dt=SLAB_CE√(g'h); lobe healing ← crosswind mass conservation (no constant); edge halo ←
-   P-G σ_y(x) (PG_KY, class F). New free knobs: NONE added; one (TAPER_W) removed. SLAB entrainment
-   constants (SLAB_CE/aT/k) stay frozen, preserving the report-distance calibration.
+   -------------------------------------------------------------------------------------------------
+   v35-reach-experimental — PROVENANCE LEDGER (updated 2026-06-21). Identity reconciled: VERSION, the
+   <title> and this banner now all read v35-reach-experimental, because the dispersion engine is NO
+   LONGER the v33-phenomenological one. The previous claim — "the SLAB engine is frozen / self-test
+   stays 44/44 by construction / report-distance calibration preserved" — is RETIRED; it is no longer
+   true. What actually drifted from the v33 frozen values (v33 -> current):
+     v34:  SLAB_aT        0.02  -> 0.12    (slab entrainment coefficient, ~6x larger; widens & dilutes core)
+           SLAB_DBDX_CAP  (none) -> introduced  (new cap on the gravity-spreading slope dW/dx)
+     v35:  RI_DENSE_LO/HI 0.3/3.0 -> 0.05/0.5  (dense->passive transition band — cloud stays dense far longer)
+           SLAB_DBDX_CAP  1.0 -> 3.0        (sub-1 m/s lateral spread allowed to exceed advection, for CCTV NW reach)
+           SLUMP (SLUMP_VIS) 0.08 -> 1.4    (visible-slump speed scale)
+           calm crossover smooth(0.15,0.8) -> smooth(0.05,2.0)  (calm<->windy switch moved up-wind)
+           sigC           0.9 -> 0.25       (crosswind sigma scaling)     (PG_KY = 0.04 unchanged)
+   CONSEQUENCE, stated plainly: the SLAB ENTRAINMENT (SLAB_aT) and the DENSE->PASSIVE TRANSITION
+   (RI_DENSE band) are NO LONGER the v33-frozen values, so the report-distance calibration is PENDING
+   RE-DERIVATION — not "preserved". The v36 solve-level self-test (runSolveSelfTest) measures this
+   directly: at the documented 0600 IST 7 May condition the model currently UNDER-predicts the published
+   with-buoyancy downwind curve (Karmakar 2025 Fig.11a: ~4600/1800/25 ppm at 200/400/1600 m) by roughly
+   an order of magnitude (F2=0, NMB~-0.9; AEGL-3 reach ~100 m vs the 333-441 m ALOHA/FLEXPART envelope).
+   The solve GUARD (structural integrity) passes and genuinely gates the render; the calibration tier
+   reports PENDING — honestly, as a live measurement rather than the old "by construction" assertion.
+   v36 ELEVATED-SOURCE path: the M6 vent (RELEASE_HEIGHT_M = 12.5 m) is modelled as a dense jet that
+   falls, drifts downwind (touchdownM) and entrains air during the descent, collapsed to a VIRTUAL GROUND
+   SOURCE whose diluted, downwind-shifted x=0 state (Dc, b, h) feeds buildSlab. ENT_DESC = 0.10 (the
+   Morton-Taylor-Turner top-hat entrainment value) is a documented default, NOT a v33-frozen constant.
+   (Retained from v29-v33, still true: lateral gravity spreading b(x) from dW/dt=SLAB_CE·√(g'h) replacing
+   TAPER_W; crosswind mass conservation ∫c dy; Pasquill-Gifford σ_y(x) edge halo, class F.)
    ========================================================================= */
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -1566,7 +1575,11 @@ addEventListener('resize', () => {
     const gp = Math.max(gReduced(T_rel, T_amb), 0.5);
     const w_settle = Math.sqrt(gp * 0.5);              // crude settling velocity scale
     const t_fall = height / Math.max(w_settle, 0.1);   // s
-    return Math.max(u, 0.3) * t_fall;                  // horizontal drift during fall (m)
+    const drift = Math.max(u, 0.3) * t_fall;           // horizontal drift during fall (m)
+    // v36: revived & repaired. Was dead code returning only the drift; now returns the full
+    // descent state used to build the elevated-source -> virtual-ground-source equivalent:
+    // drift (downwind offset), tFall (delay before touchdown), wSettle, and the slant fall path.
+    return { drift, tFall: t_fall, wSettle: w_settle, slant: Math.sqrt(height * height + drift * drift), height };
   }
   const isLofting = (T_rel, T_amb) => gReduced(T_rel, T_amb) < LOFT_GPRIME_THRESHOLD;
 
@@ -1750,7 +1763,7 @@ addEventListener('resize', () => {
     RELEASE_HEIGHT_M, LOFT_GPRIME_THRESHOLD, touchdownM, isLofting, satPpmAt,
     VENT_PLATEAU_C, VENT_PLATEAU_END_MIN, VENT_COOL_ANCHOR, ventTempAtMin,
     SCENARIOS, OBSERVED, factorOf2Fraction, normalisedMeanBias, runSelfTest,
-    VERSION: 'v33-phenomenological'
+    VERSION: 'v35-reach-experimental'
   };
 
   global.V22 = V22;
@@ -1760,7 +1773,7 @@ addEventListener('resize', () => {
 var V22 = window.V22;
 ;(function(){ try{
 document.head.insertAdjacentHTML('beforeend', "<style>\n#compass{ left:50% !important; right:auto !important; transform:translateX(-50%) !important; top:12px !important; }\n#ui-panel{position:absolute;top:16px;right:16px;left:auto;z-index:30;background:var(--panel-bg);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);\n border:1px solid var(--panel-border);padding:16px 18px;border-radius:14px;width:298px;\n box-shadow:0 6px 24px rgba(0,0,0,0.35);max-height:calc(100vh - 32px);overflow-y:auto;color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;}\n#ui-panel h2{margin-top:0;font-size:15px;font-weight:650;letter-spacing:0.2px;text-transform:none;border-bottom:1px solid var(--panel-border);padding-bottom:8px;color:var(--txt);}\n#ui-panel .control-group{margin-bottom:10px;}\n#ui-panel label{display:block;font-size:11px;color:var(--txt-dim);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.3px;}\n#ui-panel select{width:100%;padding:6px;background:rgba(255,255,255,0.07);color:var(--txt);border:1px solid var(--panel-border);border-radius:6px;font-size:12px;}\n#ui-panel .slider-container{display:flex;align-items:center;justify-content:space-between;}\n#ui-panel input[type=range]{flex-grow:1;margin-right:10px;accent-color:var(--accent);height:3px;}\n#ui-panel .value-display{font-family:inherit;font-variant-numeric:tabular-nums;font-size:11.5px;width:70px;text-align:right;color:var(--txt-dim);}\n#ui-panel .metric-card{background:rgba(255,255,255,0.04);padding:10px;border-radius:8px;margin-bottom:12px;font-size:12px;border-left:3px solid var(--accent);}\n#ui-panel .metric-row{display:flex;justify-content:space-between;margin-bottom:4px;}\n#ui-panel .metric-val{font-family:inherit;font-variant-numeric:tabular-nums;font-weight:600;color:var(--accent);}\n#ui-panel .metric-val.warn{color:#ebcb8b;} #ui-panel .metric-val.stop{color:#bf616a;}\n#ui-panel .legend{font-size:0.72rem;}\n#ui-panel .legend .row{display:flex;align-items:center;margin-bottom:4px;}\n#ui-panel .swatch{width:13px;height:13px;border-radius:3px;margin-right:8px;flex-shrink:0;}\n#ui-panel .note{font-size:10.5px;color:var(--txt-dim);line-height:1.35;margin-top:6px;}\n#ui-panel .dz-btn{width:100%;padding:9px;margin:0 0 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:#3b6ea5;color:#fff;font-size:0.85rem;font-weight:600;cursor:pointer;}\n#ui-panel .dz-btn.on{background:#bf616a;}\n#ui-panel #labelToggle{width:100%;padding:8px;margin:0 0 12px;border-radius:8px;border:1px solid var(--panel-border);background:rgba(255,255,255,0.08);color:var(--txt);font:600 12px -apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;cursor:pointer;transition:background .15s;}\n#ui-panel #labelToggle:hover{background:rgba(255,255,255,0.16);}\n#ui-panel #labelToggle.off{background:var(--accent);border-color:var(--accent);color:#1a1209;}\n#startBox{position:absolute;top:74px;left:50%;transform:translateX(-50%);z-index:30;display:flex;flex-direction:column;align-items:center;gap:5px;}\n#startBtn{padding:8px 16px;border-radius:8px;border:1px solid var(--panel-border);background:var(--panel-bg);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);color:var(--txt);font:600 12px -apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,0.35);transition:background .15s;}\n#startBtn:hover{background:rgba(255,255,255,0.16);}\n#startBtn.on{background:var(--accent);border-color:var(--accent);color:#1a1209;}\n#startBox .v6-timer{font-size:13px;color:var(--txt);font-variant-numeric:tabular-nums;background:var(--panel-bg);border:1px solid var(--panel-border);border-radius:8px;padding:3px 10px;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);min-width:60px;text-align:center;}\n</style>");
-document.body.insertAdjacentHTML('beforeend', "<div id=\"ui-panel\">\n  <h2>Styrene Release Reconstruction</h2>\n  <div class=\"metric-card\">\n    <label style=\"margin-bottom:6px;\">Hue = concentration (toxicity)</label>\n    <div class=\"legend\">\n      <div class=\"row\"><span class=\"swatch\" style=\"background:#bf616a;\"></span>&gt;5,000 ppm (lethal)</div>\n      <div class=\"row\"><span class=\"swatch\" style=\"background:#e08a3c;\"></span>1,000&ndash;5,000 ppm</div>\n      <div class=\"row\"><span class=\"swatch\" style=\"background:#ebcb8b;\"></span>&lt;1,000 ppm (dilute)</div>\n      <div class=\"row\"><span class=\"swatch\" style=\"background:#eef2ff;\"></span>condensing droplets (white)</div>\n    </div>\n  </div>\n  <div class=\"control-group\"><label>Release scenario</label><select id=\"scenario\"><option value=\"A\">(A) Lower bound &mdash; 30.91 MT peak</option><option value=\"B\" selected>(B) Recorded &mdash; 42.14 MT peak</option><option value=\"C\">(C) Worst case +10% &mdash; 46.00 MT peak</option><option value=\"D\">(D) Extreme &mdash; 50.00 MT peak</option></select></div>\n  <button id=\"labelToggle\" type=\"button\">Hide map labels</button>\n  <div class=\"metric-card\">\n    <div class=\"metric-row\"><span>Status:</span><span id=\"source-rate\" class=\"metric-val stop\">stopped</span></div>\n    <div class=\"metric-row\"><span>Released / Inventory:</span><span id=\"mass-display\" class=\"metric-val\">0 / 1937 t</span></div>\n    <div class=\"metric-row\"><span>Regime:</span><span id=\"regime\" class=\"metric-val\">&mdash;</span></div>\n    <div class=\"metric-row\"><span>1,000 ppm reach:</span><span id=\"d1000\" class=\"metric-val\">&mdash; m</span></div>\n    <div class=\"metric-row\"><span>5,000 ppm reach:</span><span id=\"d5000\" class=\"metric-val\">&mdash; m</span></div>\n    <div class=\"metric-row\"><span>Sat. threshold:</span><span id=\"satppm\" class=\"metric-val\">&mdash; ppm</span></div>\n    <div class=\"metric-row\"><span>Tracer parcels:</span><span id=\"particle-count\" class=\"metric-val\">0</span></div>\n  </div>\n  <div class=\"control-group\"><label>Styrene visibility</label><div class=\"slider-container\"><input type=\"range\" id=\"cloudVis\" min=\"0.5\" max=\"4\" step=\"0.1\" value=\"2.0\"><span id=\"cloudVis-val\" class=\"value-display\">2.0&times;</span></div></div>\n  <div class=\"control-group\"><label>Wind direction (from)</label><div class=\"slider-container\"><input type=\"range\" id=\"windDir\" min=\"0\" max=\"360\" step=\"1\" value=\"315\"><span id=\"windDir-val\" class=\"value-display\">&mdash;</span></div></div>\n  <div class=\"control-group\"><label>Wind speed (0 = dead calm)</label><div class=\"slider-container\"><input type=\"range\" id=\"windSpeed\" min=\"0\" max=\"6\" step=\"0.1\" value=\"0.5\"><span id=\"windSpeed-val\" class=\"value-display\">0.5 m/s</span></div></div>\n  <div class=\"control-group\"><label>Ambient temperature</label><div class=\"slider-container\"><input type=\"range\" id=\"temp\" min=\"15\" max=\"45\" step=\"1\" value=\"25\"><span id=\"temp-val\" class=\"value-display\">25&deg;C</span></div></div>\n  <div class=\"control-group\"><label>Relative humidity</label><div class=\"slider-container\"><input type=\"range\" id=\"humidity\" min=\"50\" max=\"100\" step=\"1\" value=\"85\"><span id=\"humidity-val\" class=\"value-display\">85%</span></div></div>\n  <div class=\"note\">Dense-gas SLAB box model, not CFD.</div>\n</div>\n<div id=\"startBox\"><button id=\"startBtn\" class=\"v6-start\">Start release</button><span id=\"time-display\" class=\"v6-timer\">&mdash;</span></div>");
+document.body.insertAdjacentHTML('beforeend', "<div id=\"ui-panel\">\n  <h2>Styrene Release Reconstruction</h2>\n  <div class=\"metric-card\">\n    <label style=\"margin-bottom:6px;\">Hue = concentration (toxicity)</label>\n    <div class=\"legend\">\n      <div class=\"row\"><span class=\"swatch\" style=\"background:#bf616a;\"></span>&gt;5,000 ppm (lethal)</div>\n      <div class=\"row\"><span class=\"swatch\" style=\"background:#e08a3c;\"></span>1,000&ndash;5,000 ppm</div>\n      <div class=\"row\"><span class=\"swatch\" style=\"background:#ebcb8b;\"></span>&lt;1,000 ppm (dilute)</div>\n      <div class=\"row\"><span class=\"swatch\" style=\"background:#eef2ff;\"></span>condensing droplets (white)</div>\n    </div>\n  </div>\n  <div class=\"control-group\"><label>Release scenario</label><select id=\"scenario\"><option value=\"A\">(A) Lower bound &mdash; 30.91 MT peak</option><option value=\"B\" selected>(B) Recorded &mdash; 42.14 MT peak</option><option value=\"C\">(C) Worst case +10% &mdash; 46.00 MT peak</option><option value=\"D\">(D) Extreme &mdash; 50.00 MT peak</option></select></div>\n  <div class=\"metric-card\">\n    <div class=\"metric-row\"><span>Status:</span><span id=\"source-rate\" class=\"metric-val stop\">stopped</span></div>\n    <div class=\"metric-row\"><span>Released / Inventory:</span><span id=\"mass-display\" class=\"metric-val\">0 / 1937 t</span></div>\n    <div class=\"metric-row\"><span>Regime:</span><span id=\"regime\" class=\"metric-val\">&mdash;</span></div>\n    <div class=\"metric-row\"><span>1,000 ppm reach:</span><span id=\"d1000\" class=\"metric-val\">&mdash; m</span></div>\n    <div class=\"metric-row\"><span>5,000 ppm reach:</span><span id=\"d5000\" class=\"metric-val\">&mdash; m</span></div>\n    <div class=\"metric-row\"><span>Sat. threshold:</span><span id=\"satppm\" class=\"metric-val\">&mdash; ppm</span></div>\n    <div class=\"metric-row\"><span>Tracer parcels:</span><span id=\"particle-count\" class=\"metric-val\">0</span></div>\n  </div>\n  <div class=\"control-group\"><label>Styrene visibility</label><div class=\"slider-container\"><input type=\"range\" id=\"cloudVis\" min=\"0.5\" max=\"4\" step=\"0.1\" value=\"2.0\"><span id=\"cloudVis-val\" class=\"value-display\">2.0&times;</span></div></div>\n  <div class=\"control-group\"><label>Wind direction (from)</label><div class=\"slider-container\"><input type=\"range\" id=\"windDir\" min=\"0\" max=\"360\" step=\"1\" value=\"315\"><span id=\"windDir-val\" class=\"value-display\">&mdash;</span></div></div>\n  <div class=\"control-group\"><label>Wind speed (0 = dead calm)</label><div class=\"slider-container\"><input type=\"range\" id=\"windSpeed\" min=\"0\" max=\"6\" step=\"0.1\" value=\"0.5\"><span id=\"windSpeed-val\" class=\"value-display\">0.5 m/s</span></div></div>\n  <div class=\"control-group\"><label>Ambient temperature</label><div class=\"slider-container\"><input type=\"range\" id=\"temp\" min=\"15\" max=\"45\" step=\"1\" value=\"25\"><span id=\"temp-val\" class=\"value-display\">25&deg;C</span></div></div>\n  <div class=\"control-group\"><label>Relative humidity</label><div class=\"slider-container\"><input type=\"range\" id=\"humidity\" min=\"50\" max=\"100\" step=\"1\" value=\"85\"><span id=\"humidity-val\" class=\"value-display\">85%</span></div></div>\n  <div class=\"note\">Dense-gas SLAB box model, not CFD.</div>\n</div>\n<div id=\"startBox\"><button id=\"startBtn\" class=\"v6-start\">Start release</button><span id=\"time-display\" class=\"v6-timer\">&mdash;</span></div>");
 
         // =====================================================================
         // v17 — nested visible-cloud footprint + IS 5521:1980 storage tank.
@@ -1896,10 +1909,31 @@ document.body.insertAdjacentHTML('beforeend', "<div id=\"ui-panel\">\n  <h2>Styr
             L_cool=TAU_COOL*ue;
             const g0=G*(rhoVap(Tc)/rhoa-1);
             const Dc=Math.sqrt(q0/ue);
+            // ---- v36: elevated dense source -> virtual ground source (SLAB/DEGADIS-style) ----
+            // The M6 vent sits RELEASE_HEIGHT_M above grade. The dense (rho ~3.6x air) styrene
+            // vapour is NOT emitted at ground level: it falls as a slumping jet, drifting downwind
+            // and entraining ambient air during the descent. We collapse that descent into an
+            // equivalent VIRTUAL GROUND SOURCE at the touchdown point, with (a) the x=0 state
+            // diluted by descent entrainment and (b) the origin shifted downwind by the touchdown
+            // drift. This is the standard dense-gas "elevated source" simplification.
+            const td=V22.touchdownM(T_rel, Tc, ue, RELEASE_HEIGHT_M);   // V22-scope fn (uses gReduced via closure); {drift,tFall,slant,...}
+            const xT=td.drift;                                      // downwind touchdown offset (m)
+            // Descent entrainment: a falling top-hat plume entrains ambient air along its slant
+            // path with coefficient ENT_DESC (~0.10, the Morton-Taylor-Turner top-hat value).
+            // Entrained air dilutes the styrene and enlarges the cloud while CONSERVING the
+            // styrene mass flux q0. Dilution is bounded by DIL_MAX so the gas keeps its dense
+            // character at touchdown. NOTE (v35-reach-experimental): ENT_DESC is a documented
+            // default, not a v33-frozen value — see the provenance ledger.
+            const ENT_DESC=0.10, DIL_MAX=4.0;
+            const dilution=Math.max(1, Math.min(DIL_MAX, 1 + ENT_DESC*td.slant/Math.max(Dc,0.3)));
+            const q0_eff=q0*dilution;                               // air-diluted volumetric flux at touchdown
+            const Dc_eff=Math.sqrt(q0_eff/ue);                      // enlarged characteristic dimension
             // small step + physical depth floor: the initial slump makes dh/dx
             // steeply negative; Euler with a coarse step overshoots h<0. dx=0.1
             // with h floored at SLAB_HMIN is stable and step-independent.
-            let b=Dc/2, h=Dc, x=0; const dx=0.1;
+            // v36: x=0 initials are the DILUTED virtual-source state (b,h from Dc_eff), so the
+            // peak conc phi(0)=q0/(2*b*h*ue)=1/dilution rather than pure vapour (1e6 ppm).
+            let b=Dc_eff/2, h=Dc_eff, x=0; const dx=0.1;
             const rx=[], rp=[], rb=[], rh=[];   // v29: rh = slab depth history (was computed and discarded)
             let Ri0=g0*h/(ue*ue);
             for (let i=0;i<70000;i++){
@@ -1925,7 +1959,11 @@ document.body.insertAdjacentHTML('beforeend', "<div id=\"ui-panel\">\n  <h2>Styr
             const X=new Array(N_SLAB), PPM=new Array(N_SLAB), BW=new Array(N_SLAB), HH=new Array(N_SLAB);   // v29: HH = depth
             const interp=(arrX,arrV,xq)=>{ if(xq<=arrX[0])return arrV[0]; const n=arrX.length; if(xq>=arrX[n-1])return arrV[n-1];
                 for(let j=0;j<n-1;j++){ if(xq>=arrX[j]&&xq<=arrX[j+1]){ const t=(xq-arrX[j])/(arrX[j+1]-arrX[j]); return arrV[j]+t*(arrV[j+1]-arrV[j]); } } return arrV[n-1]; };
-            for (let i=0;i<N_SLAB;i++){ const xq=xEnd*Math.pow(i/(N_SLAB-1),1.7); X[i]=xq; PPM[i]=interp(rx,rp,xq); BW[i]=interp(rx,rb,xq); HH[i]=interp(rx,rh,xq); }
+            // v36: shift the reported geometry downwind by the touchdown offset xT so x=0 of the
+            // footprint sits at the VIRTUAL GROUND SOURCE (where the elevated jet reaches grade),
+            // not at the tank base. All downstream consumers (shader field, contours, readouts)
+            // key on X / x1000 / x5000, so this single offset moves the whole footprint coherently.
+            for (let i=0;i<N_SLAB;i++){ const xq=xEnd*Math.pow(i/(N_SLAB-1),1.7); X[i]=xT+xq; PPM[i]=interp(rx,rp,xq); BW[i]=interp(rx,rb,xq); HH[i]=interp(rx,rh,xq); }
             const distTo=(thr)=>{ let last=0; for(let i=0;i<rx.length;i++){ if(rp[i]>=thr) last=rx[i]; } return last; };
             // v16: condensation threshold + visible-core reach, from the same fine arrays.
             const satPpm = PsatBar(Tc)/1.01325*1e6;   // styrene saturation conc. (ppm) at ambient T
@@ -1940,7 +1978,10 @@ document.body.insertAdjacentHTML('beforeend', "<div id=\"ui-panel\">\n  <h2>Styr
             const cVisPpm=cVisWet+(satPpm-cVisWet)*(1-hf);          // mix(satPpm, cVisWet, hf)
             const xVis=distTo(cVisPpm);                             // visible (white) fog reach (m)
             // xSat retained (styrene-only condensation) for reference; xVis is the humid-air visible reach.
-            return { X, PPM, BW, HH, g0, q0, Ri0, satPpm, cVisPpm, Tdew, x1000:distTo(1000), x5000:distTo(5000), xSat:(xSatVis||distTo(satPpm)), xVis };
+            // v36: reaches measured from the TANK = touchdown offset + reach from the virtual source.
+            return { X, PPM, BW, HH, g0, q0, Ri0, satPpm, cVisPpm, Tdew,
+                     x1000:xT+distTo(1000), x5000:xT+distTo(5000), xSat:xT+(xSatVis||distTo(satPpm)), xVis:xT+xVis,
+                     touchdownXT:xT, dilution, tFall:td.tFall, Dc, Dc_eff };
         }
 
         // ---- calm axisymmetric gravity current (box model) ----
@@ -2320,6 +2361,14 @@ document.body.insertAdjacentHTML('beforeend', "<div id=\"ui-panel\">\n  <h2>Styr
         const currentCalm=()=>1.0-smooth(0.05,2.0,uniforms.uWindSpeed.value);   // v35: crossover 0.05-2.0 m/s (gravity-Froude scale) -> calm~0.84 at 0.55 m/s
 
         function refresh(){
+            // v36: the solve-level self-test GUARD genuinely gates the render. If the elevated-source
+            // solve failed its structural checks at startup, suppress the hazard contours rather than
+            // present an unvalidated footprint as if it were calibrated.
+            if(typeof SOLVE_GUARD_OK!=='undefined' && !SOLVE_GUARD_OK){
+                while(hazardGroup.children.length) hazardGroup.remove(hazardGroup.children[0]);
+                if(regimeEl) regimeEl.textContent='⚠ solve guard failed — contours suppressed';
+                return;
+            }
             const T=uniforms.uTemperature.value, calm=currentCalm();
             const slab=buildSlab(lastQ_gs/1000, uniforms.uWindSpeed.value, T, curTrel, curLcool, uniforms.uHumidity.value);
             for(let i=0;i<N_SLAB;i++){ uniforms.uSlabX.value[i]=slab.X[i]; uniforms.uSlabPpm.value[i]=slab.PPM[i]; uniforms.uSlabBW.value[i]=slab.BW[i]; }
@@ -2340,9 +2389,72 @@ document.body.insertAdjacentHTML('beforeend', "<div id=\"ui-panel\">\n  <h2>Styr
             satEl.textContent = Math.round(slab.satPpm).toLocaleString()+' ppm';
             if(dcEl){ dcEl.textContent = (xc&&xc>=1) ? Math.round(xc)+' m' : 'none (all vapour)';
             dcEl.className = (xc&&xc>=1) ? 'metric-val' : 'metric-val warn'; }
-            regimeEl.textContent = calm>=0.85 ? 'Calm (dense gas)' : (calm<=0.15 ? `Dense slab (Ri₀=${slab.Ri0.toFixed(0)})` : 'Transition');
+            // v36: surface the elevated-source -> virtual-ground-source state (downwind touchdown
+            // offset + descent-entrainment dilution) so the windy slab visibly initialises from it.
+            const vs = (slab.touchdownXT!=null && calm<0.85) ? ` · virtual src +${slab.touchdownXT.toFixed(0)} m ÷${slab.dilution.toFixed(1)}` : '';
+            regimeEl.textContent = calm>=0.85 ? 'Calm (dense gas)' : (calm<=0.15 ? `Dense slab (Ri₀=${slab.Ri0.toFixed(0)}${vs})` : `Transition${vs}`);
             if(window.__rebuildCentreline) window.__rebuildCentreline();
         }
+
+        // ===================================================================
+        // v36: SOLVE-LEVEL self-test. The V22 IIFE self-test (runSelfTest) only
+        // exercises the source-term / mass-balance math; it cannot see buildSlab
+        // (different scope). This one drives the actual elevated-source buildSlab
+        // at the documented 0600 IST 7 May condition, PINS the computed
+        // d1000/d5000/AEGL-3 reaches, and RE-DERIVES them against the HPCR /
+        // Karmakar (2025) anchors. The contours are flagged "calibrated" only if
+        // it passes, so "self-test => calibration" is mechanically true. It also
+        // covers the Phase-2 elevated-release path (asserts the virtual source is
+        // active). F2 / NMB over the downwind anchors are reported for the ledger.
+        // ===================================================================
+        // Two tiers. GUARD = structural integrity of the elevated-source solve; MUST pass and
+        // genuinely gates the render (refresh() suppresses contours if it fails). CALIBRATION =
+        // re-derive the report-distance reaches against the HPCR/Karmakar anchors; REPORTED
+        // honestly, NOT forced to pass. The v34/v35 entrainment + dense->passive drift currently
+        // UNDER-predicts the published with-buoyancy downwind curve (~14x low at 200 m), so the
+        // report-distance calibration is PENDING (see provenance ledger). The point of wiring the
+        // solve into a self-test is that the calibration label is now a LIVE MEASUREMENT
+        // ("self-test => calibration" is mechanical), replacing the old hollow "44/44 by construction".
+        let SOLVE_GUARD_OK=false, SOLVE_REPORT=null;
+        function runSolveSelfTest(){
+          const TC=25, U=1.81, RH=85;                 // event-night ambient; 0600 IST modelled surface wind (Karmakar §6.1)
+          const Trel=(V22.SCENARIOS&&V22.SCENARIOS.B&&V22.SCENARIOS.B.T_release_c)||curTrel;
+          const Lc  =(V22.SCENARIOS&&V22.SCENARIOS.B&&V22.SCENARIOS.B.L_cool_m)||curLcool;
+          const Q   = V22.rateAtMin(198, V22.PEAK_MT.B);   // ~2.39 kg/s recorded at 0600 IST 7 May (event minute 198)
+          const slab= buildSlab(Q, U, TC, Trel, Lc, RH);
+          // centreline ppm at a downwind distance from the TANK (slab.X already carries the touchdown offset)
+          const ppmAt=(xm)=>{ const X=slab.X,P=slab.PPM,n=X.length; if(xm<=X[0])return P[0]; if(xm>=X[n-1])return P[n-1];
+            for(let j=0;j<n-1;j++){ if(xm>=X[j]&&xm<=X[j+1]){ const t=(xm-X[j])/(X[j+1]-X[j]); return P[j]+t*(P[j+1]-P[j]); } } return P[n-1]; };
+          const dForPpm=(thr)=>{ const X=slab.X,P=slab.PPM,n=X.length; if(P[0]<thr)return 0;
+            for(let j=0;j<n-1;j++){ if(P[j]>=thr&&P[j+1]<thr){ const t=(P[j]-thr)/(P[j]-P[j+1]); return X[j]+t*(X[j+1]-X[j]); } } return X[n-1]; };
+          const A=PL.calculated.downwind_concentration_ppm;   // {distances_m:[200,400,1600], with_buoyancy_ppm:[4600,1800,25]}
+          const pairs=A.distances_m.map((d,i)=>({d, p:ppmAt(d), o:A.with_buoyancy_ppm[i]}));
+          const F2 =V22.factorOf2Fraction(pairs.map(q=>({p:q.p,o:q.o})));
+          const NMB=V22.normalisedMeanBias(pairs.map(q=>({p:q.p,o:q.o})));
+          const dAEGL3=dForPpm(1100);   // AEGL-3 60-min LOC (1100 ppm) reach
+          let mono=true; for(let i=1;i<slab.PPM.length;i++){ if(slab.PPM[i]>slab.PPM[i-1]+1){ mono=false; break; } }
+          // ---- GUARD tier (must pass; gates the render) ----
+          const guard=[
+            ['elevated source active (virtual-src offset & dilution > unity)', slab.touchdownXT>0 && slab.dilution>1],
+            ['reaches ordered: 0 < d5000 < d1000', slab.x5000>0 && slab.x5000<slab.x1000],
+            ['d1000 finite & within domain', isFinite(slab.x1000) && slab.x1000>0 && slab.x1000<DOMAIN_M],
+            ['centreline peak in (0, 1e6] ppm', slab.PPM[0]>0 && slab.PPM[0]<=1e6+1],
+            ['centreline monotonically non-increasing downwind', mono]
+          ];
+          const guardPassed=guard.filter(c=>c[1]).length;
+          SOLVE_GUARD_OK = guardPassed===guard.length;
+          // ---- CALIBRATION tier (re-derived vs HPCR; reported, currently PENDING) ----
+          const aeglEnvelopeOK = dAEGL3>=333 && dAEGL3<=441;     // ALOHA/FLEXPART AEGL-3 envelope (Karmakar Table 5)
+          const reportDistCalibrated = (F2>=0.66) && aeglEnvelopeOK;
+          SOLVE_REPORT={ Q, pairs, F2, NMB, dAEGL3, x1000:slab.x1000, x5000:slab.x5000,
+                         guard, guardPassed, guardTotal:guard.length, aeglEnvelopeOK, reportDistCalibrated };
+          console.log('[solve self-test] GUARD '+(SOLVE_GUARD_OK?'PASS':'FAIL')+' ('+guardPassed+'/'+guard.length+')'
+            +' · report-distance calibration '+(reportDistCalibrated?'OK':'PENDING')
+            +' | F2='+F2.toFixed(2)+' NMB='+NMB.toFixed(2)+' dAEGL3='+Math.round(dAEGL3)+'m d1000='+Math.round(slab.x1000)+'m d5000='+Math.round(slab.x5000)+'m'
+            +' | anchors '+pairs.map(q=>q.d+'m '+Math.round(q.p)+'/'+q.o+'ppm').join('  '));
+          return SOLVE_REPORT;
+        }
+        try{ runSolveSelfTest(); }catch(e){ SOLVE_GUARD_OK=false; console.error('[solve self-test] threw', e); }
 
         const setup=()=>{
             (function(){
@@ -2672,7 +2784,8 @@ document.body.insertAdjacentHTML('beforeend', "<div id=\"ui-panel\">\n  <h2>Styr
               // the fallback now uses the same criterion -- so the dense zone is physical, not a stale radius.
               const U_DRAIN=1.0,         // v35: kept moderate; the 2.0/0.04 boost let drainage dominate the omnidirectional slump and distort the cloud directionally
                     SLOPE_FULL=0.08,     // v35: 0.04->0.08; drainage is a secondary settling term into the NW hollow, not the primary transport
-                    WIND_DAMP=0.95;      // v35: 0.8->0.95; at Ri=g'h/u^2~250 (0.55 m/s) the dense layer barely advects
+                    WIND_DAMP=0.95,      // v35: 0.8->0.95; at Ri=g'h/u^2~250 (0.55 m/s) the dense layer barely advects
+                    RIDGE_BLOCK=0.85;    // v37: fraction of the UPHILL slump removed at a strong adverse slope -> the dense front is blocked by ridges and routed down gullies (slope-aware, terrain-following)
               // v27: physical wind-resistance criterion. g' = styrene reduced gravity (cooled vapour is
               // ~3.6x air -> g' ~ 25 m/s^2, density ratio is T-independent = MW/MW_air). Fr = gravity-current
               // Froude number; H_GC = representative cloud depth (m; observed cloud 2.4-5 m). The local front
@@ -2771,15 +2884,22 @@ document.body.insertAdjacentHTML('beforeend', "<div id=\"ui-panel\">\n  <h2>Styr
                 // gives the broad ground-hugging head + channelled tail seen in the CCTV/Fig.8/Fig.10.
                 // (rr and D are computed above, where they also damp the wind.)
                 if(D>0){
-                  // (a) gravity-current spreading: v29.1 applies the field's front speed RADIALLY
-                  // (omnidirectional slump, scaled by D), filling the cloud and giving the upwind nose.
-                  // u_slump comes from the unified field (gp,h via F.uFront); the fallback reproduces the
-                  // v28 heuristic when the field is unavailable. Radial (not crosswind) avoids the
-                  // two-lobe / hollow-axis split seen at the event's ~0.5 m/s wind.
+                  // (a) gravity-current spreading: v29.1 applied the field's front speed RADIALLY
+                  // (omnidirectional slump, scaled by D). v37 makes it SLOPE-AWARE: a dense gravity
+                  // current cannot climb ridges, so the outward slump is gated by the terrain slope in
+                  // the slump direction (downslopeAt). Downhill/along-contour components pass; the uphill
+                  // component is removed on steep ground (RIDGE_BLOCK). The slump is therefore
+                  // terrain-following / drainage-routed (ponds below ridges, runs down gullies) rather
+                  // than a circle painted across ridgelines. u_slump still comes from the unified field
+                  // (gp,h via F.uFront); the fallback reproduces the v28 heuristic when it is unavailable.
+                  const ds=downslopeAt(wx,-wz), sm=Math.hypot(ds[0],ds[1]);   // downhill vector (magnitude ~ local slope)
                   if(rr>0.05){ const ox=tpos[3*i]/rr, oz=tpos[3*i+2]/rr;
-                    const u_slump = F ? F.uFront*D : SLUMP_COEF*Math.sqrt(Math.max(gPrime*h_local,1e-3))*D;
+                    let u_slump = F ? F.uFront*D : SLUMP_COEF*Math.sqrt(Math.max(gPrime*h_local,1e-3))*D;
+                    if(sm>1e-4){ const align=(ox*ds[0]+oz*ds[1])/sm;          // +1 = straight downhill, -1 = straight uphill
+                      const grade=Math.min(1, sm/SLOPE_FULL);                 // 0 flat -> 1 at/above SLOPE_FULL
+                      u_slump *= 1 - RIDGE_BLOCK*grade*Math.max(0,-align); }   // strip the uphill (align<0) slump on steep ground
                     vx+=ox*u_slump; vz+=oz*u_slump; }
-                  const ds=downslopeAt(wx,-wz), sm=Math.hypot(ds[0],ds[1]);   // (b) drain downslope, scaled by steepness
+                  // (b) explicit drainage drift down steepest descent, scaled by steepness & denseness
                   if(sm>1e-4){ const f=Math.min(1,sm/SLOPE_FULL)*U_DRAIN*D/sm; vx+=ds[0]*f; vz+=ds[1]*f; }
                 }
                 // integrate TRUE horizontal position (Lagrangian)
@@ -2843,7 +2963,13 @@ document.body.insertAdjacentHTML('beforeend', "<div id=\"ui-panel\">\n  <h2>Styr
             document.getElementById('scenario').addEventListener('change',e=>{scenarioKey=e.target.value; if(window.__v22ApplyScenario)window.__v22ApplyScenario(scenarioKey); resetSim(); refresh();});
             const btn=document.getElementById('startBtn');
             btn.addEventListener('click',()=>{ running=!running; resetSim(); btn.textContent=running?'Stop release':'Start release'; btn.classList.toggle('on',running); refresh(); });
-            (function(){ let on=true; const lb=document.getElementById('labelToggle'); if(lb) lb.addEventListener('click',()=>{ on=!on; scene.traverse(o=>{ if(o.isSprite) o.visible=on; }); lb.textContent=on?'Hide map labels':'Show map labels'; lb.classList.toggle('off',!on); }); })();
+            // v35: single grouped "Map labels & markers" toggle (left panel). OFF removes every
+            // place label, data label, the raised signposts (floating signs) AND the wind-direction
+            // arrow; ON restores them. Non-sprite members (the ArrowHelper) are tagged
+            // userData.mapLabel=true at their construction site so the one traverse catches them.
+            (function(){ const cb=document.getElementById('tgl-maplabels');
+              const apply=on=>{ scene.traverse(o=>{ if(o.isSprite || (o.userData&&o.userData.mapLabel)) o.visible=on; }); };
+              if(cb){ cb.addEventListener('change',e=>apply(e.target.checked)); apply(cb.checked); } })();
         };
 
         addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight); uniforms.uPixelRatio.value=renderer.getPixelRatio();});
@@ -2914,6 +3040,98 @@ document.body.insertAdjacentHTML('beforeend', "<div id=\"ui-panel\">\n  <h2>Styr
               for(let i=0;i<MET.length-1;i++){ const A=MET[i],B=MET[i+1]; if(min>=A.m&&min<=B.m){ const t=(min-A.m)/(B.m-A.m); return A[key]+(B[key]-A[key])*t; } } return L[key]; };
             const v6ObsTempAt=min=>metAt(min,'t'), v6ObsHumAt=min=>metAt(min,'h');
 
+            // ===================================================================
+            // v37 PHASE 4.1 — DRAINAGE-ROUTING ANALYSIS NW of the tank.
+            // Trace the steepest-descent (drainage) path from the M6 tank across the loaded
+            // elevation grid (downslopeAt). The dense layer ponds/flows along this least-cost
+            // descent — it follows gullies and is blocked by ridges — so the slope-aware front
+            // (the RIDGE_BLOCK gate in advectParticles) should track this routed line, not a circle.
+            // local downslope (scene x,z) from the top-level terrain sampler: -grad(H). (downslopeAt
+            // lives in a different closure; sample() is module-global, so we derive the gradient here.)
+            const downslopeFromSample=(x,z)=>{ const e=6;
+              const hx=(sample(x+e,-z)-sample(x-e,-z))/(2*e);
+              const hz=(sample(x,-(z+e))-sample(x,-(z-e)))/(2*e);
+              return [-hx,-hz];   // points downhill in scene coordinates
+            };
+            function drainageRouteNW(maxSteps){
+              const path=[]; let x=TANK_X, z=TANK_Z, dropTot=0; const step=8; let y0=sample(TANK_X,-TANK_Z);
+              for(let k=0;k<(maxSteps||140);k++){
+                const y=sample(x,-z); path.push(new THREE.Vector3(x, y+2, z));
+                const ds=downslopeFromSample(x,z), m=Math.hypot(ds[0],ds[1]);
+                if(m<6e-4) break;                       // flat / local sink -> ponding point
+                x+=ds[0]/m*step; z+=ds[1]/m*step;
+              }
+              const last=path[path.length-1]||new THREE.Vector3(TANK_X,y0,TANK_Z);
+              const dx=last.x-TANK_X, dz=last.z-TANK_Z;                       // scene: +x=E, -z=N
+              const bearing=(Math.atan2(dx,-dz)*180/Math.PI+360)%360;        // deg from N (toward)
+              dropTot=y0-sample(last.x,-last.z);
+              const headsNW = (bearing>=270&&bearing<=360);
+              return {path, bearing, headsNW, drop:dropTot, lengthM:path.length*step};
+            }
+            try{
+              const route=drainageRouteNW(140);
+              // draw the routed drainage front (faint cyan) so the analysis is visible on the map
+              if(route.path.length>1){
+                const drainGroup=new THREE.Group();
+                drainGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(route.path),
+                  new THREE.LineBasicMaterial({color:0x36c6c6, transparent:true, opacity:0.85, toneMapped:false})));
+                drainGroup.name='drainageRoute'; scene.add(drainGroup);
+                // optional left-panel toggle, consistent with the layer pattern
+                const aeglRow=document.getElementById('tgl-aegl'); const lab=aeglRow&&aeglRow.closest('label');
+                if(lab){ lab.insertAdjacentHTML('afterend','<label class="layer"><input type="checkbox" id="tgl-drainage" checked><span class="swatch" style="background:#36c6c6"></span><span class="lbl">Drainage route (NW)</span></label>');
+                  const t=document.getElementById('tgl-drainage'); if(t) t.addEventListener('change',e=>{ drainGroup.visible=e.target.checked; }); }
+              }
+              console.log('[drainage route] bearing '+Math.round(route.bearing)+'° (NW='+route.headsNW+') · drop '+route.drop.toFixed(1)+' m over ~'+route.lengthM+' m of steepest descent');
+            }catch(e){ console.warn('[drainage route] analysis skipped', e); }
+
+            // ===================================================================
+            // v37 PHASE 4.2 — 19-PAIR RECEPTOR VALIDATION.
+            // For each OBSERVED (receptor, timestamp) pair: drive the model with THAT timestamp's
+            // observed met (wind dir & speed, ambient T, RH from the HPCR/APPCB record), sample the
+            // model centreline ppm projected to the receptor, then compute factor-of-2 fraction and
+            // normalised mean bias over all 19 pairs (helpers V22.factorOf2Fraction / .normalisedMeanBias).
+            //
+            // CRITICAL TIMING CAVEAT (verbatim):
+            // Critical timing caveat: every OBSERVED reading is from 16:30 on 7 May onward —
+            // afternoon/evening, hours after the 03:55 CCTV. There is no measured receptor ppm at
+            // ~03:55. So these 19 pairs validate the model's general receptor skill across the event
+            // (different winds/rates), but they do not directly validate the 03:55 NW reach — that
+            // moment is constrained only by the CCTV's qualitative "dense cloud present."
+            window.__timingCaveat = 'Critical timing caveat: every OBSERVED reading is from 16:30 on 7 May onward — afternoon/evening, hours after the 03:55 CCTV. There is no measured receptor ppm at ~03:55. So these 19 pairs validate the model’s general receptor skill across the event (different winds/rates), but they do not directly validate the 03:55 NW reach — that moment is constrained only by the CCTV’s qualitative “dense cloud present.”';
+            function predPpmAtReceptor(lon, lat, windFromDeg, windMs, Q, TC, Trel, Lc, RH){
+              const slab=buildSlab(Q, Math.max(windMs,0.05), TC, Trel, Lc, RH);
+              const ang=(180-windFromDeg+360)%360; const d=windDirXZ(ang);          // downwind unit (scene x=.x, z=.y)
+              const pxv=-d.y, pzv=d.x;                                              // crosswind unit
+              const rx=xOf(lon)-TANK_X, rz=(-yNOf(lat))-TANK_Z;                     // receptor offset from tank
+              const xw=rx*d.x+rz*d.y, yw=rx*pxv+rz*pzv;                             // along-wind / crosswind
+              if(xw<=0) return 0;                                                   // upwind of source -> ~no plume
+              const ip=(arr)=>{ const X=slab.X,n=X.length; if(xw<=X[0])return arr[0]; if(xw>=X[n-1])return arr[n-1];
+                for(let j=0;j<n-1;j++){ if(xw>=X[j]&&xw<=X[j+1]){ const t=(xw-X[j])/(X[j+1]-X[j]); return arr[j]+t*(arr[j+1]-arr[j]); } } return arr[n-1]; };
+              const ppmAxis=ip(slab.PPM), bw=Math.max(ip(slab.BW),0.5);
+              return ppmAxis*Math.exp(-(yw*yw)/(2*bw*bw));                          // Gaussian crosswind on the slab half-width
+            }
+            function run19PairValidation(){
+              const recs=[V22.OBSERVED.venkatapuram, V22.OBSERVED.lgp_gate];
+              const Lc=(V22.SCENARIOS.B.L_cool_m)||100;
+              const pairs=[], detail=[];
+              for(const rec of recs){ for(const obs of rec.ppm){
+                const m=obs.t.match(/(\d+)\s+(\d+):(\d+)/); if(!m) continue;
+                const absMin=(parseInt(m[1],10)-7)*1440 + parseInt(m[2],10)*60 + parseInt(m[3],10);
+                const minW=absMin-170;            // wind/met series: eventMin 0 = 02:50 IST
+                const minR=minW+8;                // source-rate series: eventMin 0 = 02:42 IST
+                const wd=v6ObsWindAt(minW).d, ws=v6ObsSpeedAt(minW), TC=v6ObsTempAt(minW), RH=v6ObsHumAt(minW);
+                const Q=V22.rateAtMin(minR, V22.PEAK_MT.B), Trel=V22.ventTempAtMin(minR);
+                const p=predPpmAtReceptor(rec.lon, rec.lat, wd, ws, Q, TC, Trel, Lc, RH);
+                pairs.push({p, o:obs.ppm}); detail.push({t:obs.t, lon:rec.lon, p:+p.toFixed(1), o:obs.ppm});
+              }}
+              const F2=V22.factorOf2Fraction(pairs), NMB=V22.normalisedMeanBias(pairs);
+              window.__validation19={ n:pairs.length, F2, NMB, detail, caveat:window.__timingCaveat };
+              console.log('[19-pair validation] n='+pairs.length+'  F2(factor-of-2 fraction)='+F2.toFixed(2)+'  NMB(normalised mean bias)='+NMB.toFixed(2));
+              console.log('[19-pair validation] '+window.__timingCaveat);
+              return window.__validation19;
+            }
+            try{ run19PairValidation(); }catch(e){ console.warn('[19-pair validation] skipped', e); }
+
             // --- Table 4.12: measured styrene ppm vs event-minutes ---
             const SEN=[
               {name:'Venkatapuram village',lon:83.20758,lat:17.75746,peak:461,col:'#ffb347',
@@ -2949,6 +3167,7 @@ document.body.insertAdjacentHTML('beforeend', "<div id=\"ui-panel\">\n  <h2>Styr
             // observed-wind arrow anchored at the M6 tank
             const tx=TANK_X, tz=TANK_Z, ty=groundAt(tx,tz);
             const arrow=new THREE.ArrowHelper(new THREE.Vector3(0,0,1), new THREE.Vector3(tx,ty+14,tz), 80, 0xffb347, 23, 13);
+            arrow.userData.mapLabel=true;            // v35: caught by grouped Map-labels toggle (non-sprite)
             grp.add(arrow);
             const arrowLab=dynLabel(1.05); grp.add(arrowLab);
 
@@ -3328,7 +3547,7 @@ document.getElementById('loading').classList.add('done');
   // ---- offscreen WebGL2 sim context ----
   const scv=document.createElement('canvas'); scv.width=SGW; scv.height=SGH;
   const gl=scv.getContext('webgl2',{antialias:false});
-  function setTitle(s){ try{ document.title='v12dg '+s; }catch(e){} }
+  function setTitle(s){ /* v36: muted — do not clobber the <title> identity (v35-reach-experimental). Debug status routed to console only. */ try{ if(s && /error|fail/i.test(s)) console.warn('[densegas]', s); }catch(e){} }
   if(!gl || !gl.getExtension('EXT_color_buffer_float')){ console.warn('[densegas] WebGL2+float unavailable'); setTitle('densegas UNSUPPORTED'); return; }
 
   const VERT_SRC = `#version 300 es
