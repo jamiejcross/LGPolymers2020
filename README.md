@@ -1,14 +1,13 @@
 # LG Polymers 2020 — styrene release simulation
 
-Interactive 3D reconstruction of the 7 May 2020 styrene release at the LG Polymers
-plant, Visakhapatnam, with the modelled plume and AEGL exposure zones draped over
-terrain and a satellite basemap.
+This page hosts an interactive 3D reconstruction of the 7 May 2020 styrene release at the LG Polymers
+plant, Visakhapatnam, with a modelled plume and exposure zones draped over terrain and a satellite basemap.
 
 **Live:** https://jamiejcross.github.io/LGPolymers2020/
 
 ## Why this repository is split
 
-The original build is a single self-contained `.html` of ~23 MB. ~21 MB of that is
+The original build was a single self-contained `.html` of ~23 MB. ~21 MB of that is
 one base64-encoded JPEG basemap on a single line, which makes the evidentiary
 content — the physics, the source term, the exposure-ring radii and their citations
 — effectively impossible to read or diff. This repository separates the two:
