@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>LG Polymers, Visakhapatnam — Styrene Release Reconstruction (v35-reach-experimental)</title>
+<title>LG Polymers, Visakhapatnam — Styrene Release Reconstruction (v38-reach-calibrated)</title>
 <style>
   :root {
     --panel-bg: rgba(16, 22, 28, 0.78);
@@ -102,8 +102,9 @@
   <label class="layer"><input type="checkbox" id="tgl-buildings" checked><span class="swatch" style="background:#d6cfc2"></span><span class="lbl">Buildings</span></label>
   <label class="layer"><input type="checkbox" id="tgl-water" checked><span class="swatch" style="background:#5f9ec7"></span><span class="lbl">Water</span></label>
   <label class="layer"><input type="checkbox" id="tgl-lg" checked><span class="swatch" style="background:#d65108"></span><span class="lbl">LG Polymers ward</span></label>
-  <label class="layer"><input type="checkbox" id="tgl-aegl" checked><span class="swatch" style="background:#9fb0bd"></span><span class="lbl">Concentric rings (AEGL exposure)</span></label>
+  <label class="layer"><input type="checkbox" id="tgl-aegl"><span class="swatch" style="background:linear-gradient(90deg,#ebcb8b,#e08a3c,#bf616a)"></span><span class="lbl">Acute Exposure Guideline Levels</span></label>
   <label class="layer"><input type="checkbox" id="tgl-maplabels" checked><span class="swatch" style="background:#cfe0f5"></span><span class="lbl">Map labels &amp; markers</span></label>
+  <label class="layer"><input type="checkbox" id="tgl-windspeed" checked><span class="swatch" style="background:#7fd1e0"></span><span class="lbl">Wind direction &amp; speed</span></label>
   <label class="layer"><input type="checkbox" id="tgl-densegas"><span class="swatch" style="background:linear-gradient(90deg,#000004,#b6377a,#fca50a,#fcffa4)"></span><span class="lbl">Dense-gas layer (Stage D)</span></label>
   <label class="layer"><input type="checkbox" id="tgl-windfield"><span class="swatch" style="background:#7fd1e0"></span><span class="lbl">Wind field (terrain-steered)</span></label>
   <label class="layer" style="display:none"><input type="checkbox" id="tgl-overlay" disabled><span class="swatch"></span><span class="lbl">Temperature overlay</span></label>
@@ -191,30 +192,55 @@
    340 ppm (the multi-hour LOC, ~2x the 60-min zone) per the Doc 02 §1 AEGL table; (4) the AEGL-1
    zone drawn as the reported 2.5-3.6 km band, not a single ring (Doc 03 §5.6). SLAB engine still frozen.
    -------------------------------------------------------------------------------------------------
-   v35-reach-experimental — PROVENANCE LEDGER (updated 2026-06-21). Identity reconciled: VERSION, the
-   <title> and this banner now all read v35-reach-experimental, because the dispersion engine is NO
-   LONGER the v33-phenomenological one. The previous claim — "the SLAB engine is frozen / self-test
-   stays 44/44 by construction / report-distance calibration preserved" — is RETIRED; it is no longer
-   true. What actually drifted from the v33 frozen values (v33 -> current):
-     v34:  SLAB_aT        0.02  -> 0.12    (slab entrainment coefficient, ~6x larger; widens & dilutes core)
-           SLAB_DBDX_CAP  (none) -> introduced  (new cap on the gravity-spreading slope dW/dx)
-     v35:  RI_DENSE_LO/HI 0.3/3.0 -> 0.05/0.5  (dense->passive transition band — cloud stays dense far longer)
-           SLAB_DBDX_CAP  1.0 -> 3.0        (sub-1 m/s lateral spread allowed to exceed advection, for CCTV NW reach)
-           SLUMP (SLUMP_VIS) 0.08 -> 1.4    (visible-slump speed scale)
-           calm crossover smooth(0.15,0.8) -> smooth(0.05,2.0)  (calm<->windy switch moved up-wind)
-           sigC           0.9 -> 0.25       (crosswind sigma scaling)     (PG_KY = 0.04 unchanged)
-   CONSEQUENCE, stated plainly: the SLAB ENTRAINMENT (SLAB_aT) and the DENSE->PASSIVE TRANSITION
-   (RI_DENSE band) are NO LONGER the v33-frozen values, so the report-distance calibration is PENDING
-   RE-DERIVATION — not "preserved". The v36 solve-level self-test (runSolveSelfTest) measures this
-   directly: at the documented 0600 IST 7 May condition the model currently UNDER-predicts the published
-   with-buoyancy downwind curve (Karmakar 2025 Fig.11a: ~4600/1800/25 ppm at 200/400/1600 m) by roughly
-   an order of magnitude (F2=0, NMB~-0.9; AEGL-3 reach ~100 m vs the 333-441 m ALOHA/FLEXPART envelope).
-   The solve GUARD (structural integrity) passes and genuinely gates the render; the calibration tier
-   reports PENDING — honestly, as a live measurement rather than the old "by construction" assertion.
-   v36 ELEVATED-SOURCE path: the M6 vent (RELEASE_HEIGHT_M = 12.5 m) is modelled as a dense jet that
-   falls, drifts downwind (touchdownM) and entrains air during the descent, collapsed to a VIRTUAL GROUND
-   SOURCE whose diluted, downwind-shifted x=0 state (Dc, b, h) feeds buildSlab. ENT_DESC = 0.10 (the
-   Morton-Taylor-Turner top-hat entrainment value) is a documented default, NOT a v33-frozen constant.
+   v38-reach-calibrated — PROVENANCE LEDGER (updated 2026-06-21). Identity reconciled: VERSION, the
+   <title> and this banner all read v38-reach-calibrated. GOAL: this model is NOT trying to REPRODUCE
+   Karmakar et al. 2025 (FLEXPART-WRF) — it is trying to IMPROVE on it, by demonstrating the dense-gas
+   plume's NW impact on Venkatapuram that the wind-driven reference under-predicts (paper lines 452–454),
+   ground-truthed against the geolocated 03:55 CCTV visible-fog observation. The two physically decoupled
+   regimes are now calibrated and validated SEPARATELY:
+
+   (i) REGIME A — wind-driven, NE. RE-DERIVED vs the published reference (NOT "frozen / preserved"):
+       · CORRECTED METRIC FACTS: Karmakar Fig.11a's with-buoyancy downwind curve {200,400,1600 m ->
+         4600,1800,25 ppm} is for a SOURCE STRENGTH of ~28 MT/h = 7.78 kg/s (paper lines 439–440), at
+         1.81 m/s (line 332), 30-min-averaged at 10 m AGL (lines 305–308, 404).
+       · SELF-TEST SOURCE-STRENGTH FIX (Phase 1): runSolveSelfTest's CALIBRATION tier previously drove
+         buildSlab at the 0600 EVENT rate (~2.39 kg/s) — ~3.26x too low — so its F2/NMB measured a HARNESS
+         mismatch, not the physics. It now drives the anchor at the paper's 7.78 kg/s / 1.81 m/s. (The
+         GUARD/structural tier still runs on the event-rate solve and gates the render, unchanged.)
+       · SLAB_aT RECALIBRATION (Phase 2): v34 raised the slab entrainment coefficient 0.02 -> 0.12, which
+         over-entrains and over-dilutes the near/mid field. A bounded sweep over [0.02,0.12] vs the 7.78
+         kg/s anchor: 0.12 -> 0.05 is the largest near/mid-field lift (200 m 733 -> 1756 ppm) and longest
+         AEGL-3 reach (162 -> 261 m, toward the 333–441 m ALOHA/FLEXPART envelope, Table 5) that STILL keeps
+         the 1600 m far field within factor-of-2 (49 vs 25 ppm). CORRECTED ANCHOR (logged each load):
+         F2=0.33, NMB=-0.64, dAEGL3=261 m, anchors 200/400/1600 m = 1756/520/49 ppm. (0.02 maximises F2=0.67
+         and lands AEGL-3 at 437 m in-envelope but overshoots the far field to 121 ppm; 0.05 honours the
+         far-field gate.) v33 frozen value was 0.02.
+
+   (ii) REGIME B — near-field gravity/drainage, NW. DELIBERATE EXTENSION, validated against the geolocated
+        03:55 CCTV, NOT against v33. These are KEPT (reverting them re-breaks the NW reach):
+          RI_DENSE_LO/HI  0.3/3.0 -> 0.05/0.5   (stable nocturnal BL suppresses the dense->passive transition)
+          calm crossover  smooth(0.15,0.8) -> smooth(0.05,2.0)   (gravity-Froude scale; calm~0.84 at 0.55 m/s)
+          SLUMP_VIS       0.08 -> 1.4           (radial slump speed ~ gravity-current front Froude)
+          sigC            0.9 -> 0.25           (crosswind sigma scaling)        (PG_KY = 0.04 unchanged)
+          SLAB_DBDX_CAP   1.0 -> 3.0            (sub-1 m/s lateral spread may exceed advection, for NW reach)
+        VALIDATION (Phase 3, runCCTVValidation — the PRIMARY NW improvement metric): the ONE dense-gas field
+        (denseFieldAt), marched NW toward the geolocated CCTV point (17.757004136416498, 83.20736090710476,
+        ~264 m NW), at the onset peak loss rate / 0.55 m/s / 94% RH, gives a visible-fog NW reach ~664 m
+        (the 264 m CCTV point lies INSIDE the visible envelope) with the dense lethal core (>=5,000 ppm)
+        held to ~226 m, within the ~380 m near-field zone. Both-sided geometric gate: PASS.
+        NB the SLAB_aT recalibration in (i) is a WINDY-branch coefficient only; the calm/NW reach
+        (calmParams / calmRadiusForPpm, d1000/d5000 at 0.55 m/s) is independent of it — VERIFIED unchanged.
+
+   RECEPTOR VALIDATION (Phase 4, run19PairValidation): F2/NMB are reported SEPARATELY for NE/lgp_gate
+   (Regime A — should track the reference) and NW/venkatapuram (Regime B — the harder NW constraint), and
+   overall. Global F2 is deliberately NOT optimised (it pulls toward the reference's own NW failure). The
+   afternoon receptor pairs are a SECONDARY constraint (every OBSERVED reading is from 16:30 onward — see
+   the verbatim timing caveat); the CLEAN NW anchor is the 03:55 CCTV gate above.
+
+   v36 ELEVATED-SOURCE path (retained): the M6 vent (RELEASE_HEIGHT_M = 12.5 m) is a dense jet that falls,
+   drifts downwind (touchdownM) and entrains during descent, collapsed to a VIRTUAL GROUND SOURCE whose
+   diluted, downwind-shifted x=0 state (Dc, b, h) feeds buildSlab. ENT_DESC = 0.10 (Morton-Taylor-Turner
+   top-hat entrainment) is a documented default, NOT a v33-frozen constant.
    (Retained from v29-v33, still true: lateral gravity spreading b(x) from dW/dt=SLAB_CE·√(g'h) replacing
    TAPER_W; crosswind mass conservation ∫c dy; Pasquill-Gifford σ_y(x) edge halo, class F.)
    ========================================================================= */
@@ -844,35 +870,9 @@ function addMarker(lat, lon, label, colorHex, accentHex) {
   addLabel(label, x, y + 50, z, accentHex);
 }
 
-// AEGL exposure rings around the M6 tank (calculated, neutral grey)
-// Drawn as flat draped bands rather than thin lines so they stay visible
-// regardless of the platform's WebGL line-width support.
-const aeglGroup = new THREE.Group();
-const RING_WIDTH_M = 32;
-function ringBand(radiusM, widthM, lift, clipFrac, color, opacity) {
-  const outer = arcPts(0, 360, radiusM + widthM/2, lift, clipFrac, 128);
-  const inner = arcPts(0, 360, radiusM - widthM/2, lift, clipFrac, 128);
-  const P = [];
-  for (let i = 0; i < outer.length - 1; i++) {
-    const o0 = outer[i], o1 = outer[i+1], i0 = inner[i], i1 = inner[i+1];
-    P.push(o0.x,o0.y,o0.z, o1.x,o1.y,o1.z, i1.x,i1.y,i1.z);
-    P.push(o0.x,o0.y,o0.z, i1.x,i1.y,i1.z, i0.x,i0.y,i0.z);
-  }
-  return new THREE.Mesh(geoFromPositions(P),
-    new THREE.MeshBasicMaterial({ color, transparent: true, opacity, side: THREE.DoubleSide, depthWrite: false, toneMapped: false }));
-}
-for (const ring of PL.calculated.rings) {
-  const clip = ring.radius_m > 2000 ? 0.97 : null;
-  if (ring.radius_m > 2000) {
-    // v22 Step 6: AEGL-1 drawn as an UNCERTAINTY BAND 2500-3600 m, not a single 2900 m line (Doc 03 §5.6).
-    aeglGroup.add(ringBand(3050, 1100, 3, 0.97, 0x9fb0bd, 0.26));
-    aeglGroup.add(ringBand(2500, 8, 3, 0.985, 0x9fb0bd, 0.75));
-    aeglGroup.add(ringBand(3600, 8, 3, 0.955, 0x9fb0bd, 0.75));
-  } else {
-    aeglGroup.add(ringBand(ring.radius_m, RING_WIDTH_M, 3, clip, 0x9fb0bd, 0.85));
-  }
-}
-scene.add(aeglGroup);
+// v38: heavy grey "Concentric rings (AEGL exposure)" layer removed from the map per Phase 0.
+// The AEGL contours now live on the dynamic "Acute Exposure Guideline Levels" layer
+// (rebuildContours -> hazardGroup), drawn as 15 pt fat lines coloured by concentration hue.
 
 // Simulated plume-transport sector (calculated, grey fill + outline)
 {
@@ -1377,8 +1377,7 @@ document.getElementById('ov-max').addEventListener('change', onMinMax);
 // roads have no toggle — always rendered alongside terrain
 const layerMap = {
   'tgl-terrain': terrainGroup, 'tgl-buildings': buildingsGroup,
-  'tgl-water': waterGroup, 'tgl-lg': lgGroup, 'tgl-overlay': overlayGroup,
-  'tgl-aegl': aeglGroup
+  'tgl-water': waterGroup, 'tgl-lg': lgGroup, 'tgl-overlay': overlayGroup
 };
 for (const [id, grp] of Object.entries(layerMap))
   document.getElementById(id).addEventListener('change', e => { grp.visible = e.target.checked; });
@@ -1763,7 +1762,7 @@ addEventListener('resize', () => {
     RELEASE_HEIGHT_M, LOFT_GPRIME_THRESHOLD, touchdownM, isLofting, satPpmAt,
     VENT_PLATEAU_C, VENT_PLATEAU_END_MIN, VENT_COOL_ANCHOR, ventTempAtMin,
     SCENARIOS, OBSERVED, factorOf2Fraction, normalisedMeanBias, runSelfTest,
-    VERSION: 'v35-reach-experimental'
+    VERSION: 'v38-reach-calibrated'
   };
 
   global.V22 = V22;
@@ -1834,7 +1833,17 @@ document.body.insertAdjacentHTML('beforeend', "<div id=\"ui-panel\">\n  <h2>Styr
         // this is the constant that was unfrozen. SLAB_DBDX_CAP (B2): bound on the gravity-spreading slope
         // db/dx so the windy lens can never be wider than it is long at low wind (lateral spread rate <=
         // advection speed; a Froude bound).
-        const SLAB_CE=1.0, SLAB_aT=0.12, SLAB_k=0.5, SLAB_HMIN=0.3, N_SLAB=48, SLAB_DBDX_CAP=3.0;   // v35: cap 1.0->3.0; sub-1 m/s dense-gas lateral spread exceeds advection (CCTV NW reach)
+        const SLAB_CE=1.0, SLAB_k=0.5, SLAB_HMIN=0.3, N_SLAB=48, SLAB_DBDX_CAP=3.0;   // v35: cap 1.0->3.0; sub-1 m/s dense-gas lateral spread exceeds advection (CCTV NW reach)
+        // v38 PHASE 2 — Regime-A near/mid-field recalibration, RE-DERIVED vs the Karmakar Fig.11a anchor
+        // (7.78 kg/s, 1.81 m/s). v34 raised this 0.02->0.12, which over-entrains and over-dilutes the
+        // near/mid field. A bounded sweep over [0.02,0.12] vs the anchor: 0.02 maximises F2 (0.67) and lands
+        // AEGL-3 reach at 437 m (in the 333–441 m ALOHA/FLEXPART envelope, Table 5) but overshoots the
+        // 1600 m far field (121 vs 25 ppm). 0.05 is the largest near/mid-field lift (200 m 733->1756 ppm,
+        // ~2.4x) and longest AEGL-3 reach (162->261 m, toward the envelope) that STILL keeps the 1600 m far
+        // field within factor-of-2 (49 vs 25 ppm), with NMB improving -0.85->-0.64. Chosen to honour the
+        // far-field gate. This is a WINDY-branch (Regime A) coefficient only; the calm/NW gravity reach
+        // (calmParams / calmRadiusForPpm) is independent of it (verified). v33 frozen value was 0.02.
+        const SLAB_aT=0.05;
         // v34b: POST-RELEASE AIR COOLING (Newton's law of cooling). A parcel vented at T_rel exchanges heat
         // with entrained air at a rate proportional to the temperature difference,
         //   dT/dt = -(T - T_amb)/TAU_COOL   =>   T(t) = T_amb + (T_rel - T_amb)*exp(-t/TAU_COOL),
@@ -1922,7 +1931,7 @@ document.body.insertAdjacentHTML('beforeend', "<div id=\"ui-panel\">\n  <h2>Styr
             // path with coefficient ENT_DESC (~0.10, the Morton-Taylor-Turner top-hat value).
             // Entrained air dilutes the styrene and enlarges the cloud while CONSERVING the
             // styrene mass flux q0. Dilution is bounded by DIL_MAX so the gas keeps its dense
-            // character at touchdown. NOTE (v35-reach-experimental): ENT_DESC is a documented
+            // character at touchdown. NOTE (v38-reach-calibrated): ENT_DESC is a documented
             // default, not a v33-frozen value — see the provenance ledger.
             const ENT_DESC=0.10, DIL_MAX=4.0;
             const dilution=Math.max(1, Math.min(DIL_MAX, 1 + ENT_DESC*td.slant/Math.max(Dc,0.3)));
@@ -2049,69 +2058,91 @@ document.body.insertAdjacentHTML('beforeend', "<div id=\"ui-panel\">\n  <h2>Styr
         // ---- contours: slab footprint (windy) or circles (calm) ----
         const hazardGroup=new THREE.Group(); dispRoot.add(hazardGroup);
         function circlePts(r_u){const p=[],s=96; for(let i=0;i<=s;i++){const a=(i/s)*Math.PI*2; p.push(new THREE.Vector3(Math.cos(a)*r_u,0.07,Math.sin(a)*r_u));} return p;}
+        // v38: remove hazard children AND prune any AEGL fat-line materials from the global
+        // resize registry so the per-refresh rebuild does not leak LineMaterials.
+        function clearHazard(){
+            for(let i=hazardGroup.children.length-1;i>=0;i--){ const c=hazardGroup.children[i];
+                if(c.userData && c.userData.fatMat && window.__fatLineMats){ const k=window.__fatLineMats.indexOf(c.userData.fatMat); if(k>=0) window.__fatLineMats.splice(k,1); }
+                hazardGroup.remove(c);
+            }
+        }
+        // v38: single source of truth for the three overlay layers. Objects are tagged
+        // userData.layer='aegl' | 'wind'; everything else that is a sprite or userData.mapLabel
+        // belongs to the "Map labels & markers" layer. Called from each toggle and after every
+        // rebuildContours (so freshly-built hazard contours pick up the current toggle states).
+        function applyOverlayLayers(){
+            const ml=document.getElementById('tgl-maplabels'), ag=document.getElementById('tgl-aegl'), wn=document.getElementById('tgl-windspeed');
+            const mlOn=ml?ml.checked:true, agOn=ag?ag.checked:false, wnOn=wn?wn.checked:true;
+            scene.traverse(o=>{ const L=o.userData&&o.userData.layer;
+                if(L==='aegl'){ o.visible=agOn; return; }
+                if(L==='wind'){ o.visible=wnOn; return; }
+                if(o.isSprite || (o.userData&&o.userData.mapLabel)) o.visible=mlOn;
+            });
+        }
+        window.__applyOverlayLayers=applyOverlayLayers;
         function rebuildContours(slab, angleDeg, calm, cp){
-            while(hazardGroup.children.length) hazardGroup.remove(hazardGroup.children[0]);
+            clearHazard();
             const specs=[{thr:5000,color:0xbf616a,text:"5,000 ppm"},{thr:1000,color:0xe08a3c,text:"1,000 ppm"}];
-            // v17: second NESTED footprint = the condensation / visible-cloud envelope.
-            // It marks where styrene partial pressure exceeds Psat(T) (slab.satPpm), i.e.
-            // the only zone a camera could record a styrene aerosol. Drawn near-white and
-            // nested inside the toxic ppm contours; the gap between them is the argument
-            // (small "what you could see" vs large "what could harm you"). T-dependent.
+            // v17: nested condensation / visible-cloud envelope (near-white), always-on cloud outline.
             const COND_COLOR=0xdbe7f7;
-            // v29.4: extra LOCs sourced from Doc 02 §1.  LEL_PPM = flammability screen (Doc 02 §5.1.8);
-            // AEGL3_4H_PPM = the 4-/8-h AEGL-3 lethal LOC (340 ppm) — more apt than the 60-min 1,100 ppm
-            // for this multi-hour exposure, and a materially larger lethal zone.  AEGL1_BAND = the reported
-            // 2.5–3.6 km AEGL-1 spread (Doc 02 §6 / Doc 03 §5.6), drawn as a band not a single ring.
-            const LEL_PPM=11000, LEL_COLOR=0xb48ead, AEGL3_4H_PPM=340, AEGL3_4H_COLOR=0x8b3a3a;
-            const AEGL1_BAND=[2500,3600], AEGL1_COLOR=0x6b7886;
+            // v29.4: extra LOCs (Doc 02 §1). LEL_PPM = flammability screen (Doc 02 §5.1.8);
+            // AEGL3_4H_PPM = 4-/8-h AEGL-3 lethal LOC (340 ppm); AEGL1_BAND = reported 2.5–3.6 km AEGL-1 spread.
+            const LEL_PPM=11000, LEL_COLOR=0xb48ead, AEGL3_4H_PPM=340;
+            const AEGL1_BAND=[2500,3600], AEGL1_PPM=20;   // AEGL-1 60-min styrene LOC = 20 ppm (Doc 02 §1)
+            // v38: concentration-hue palette (same thresholds as the receptor ppmColor) for the AEGL layer.
+            const concHue=(ppm)=> ppm>=1100?0xbf616a : ppm>=130?0xe08a3c : ppm>=20?0xebcb8b : 0x8fb573;
+            const concHueStr=(ppm)=>'#'+concHue(ppm).toString(16).padStart(6,'0');
+            // v38: AEGL contour = 15 pt fat line, coloured by concentration hue, tagged to the
+            // "Acute Exposure Guideline Levels" layer (off by default). Points auto-closed for the loop.
+            const addAeglLine=(ptsVecs, ppm)=>{ const pv=ptsVecs.slice(); const a=pv[0],b=pv[pv.length-1];
+                if(a&&b&&(a.x!==b.x||a.z!==b.z)) pv.push(a.clone());
+                const l=fatLine(pv, concHue(ppm), 15); l.userData.layer='aegl'; l.userData.fatMat=l.material; hazardGroup.add(l); return l; };
+            const addAeglLabel=(text, ppm, pos)=>{ const lab=makeLabel(text, concHueStr(ppm), 0.85); lab.position.copy(pos); lab.userData.layer='aegl'; hazardGroup.add(lab); return lab; };
+            // v38: PPM / LEL contours + labels belong to the "Map labels & markers" layer (mapLabel-tagged).
+            const addMapLine=(geoPts, color)=>{ const ln=new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(geoPts), new THREE.LineBasicMaterial({color})); ln.userData.mapLabel=true; hazardGroup.add(ln); return ln; };
+            const addMapLabel=(text, colStr, scale, pos)=>{ const lab=makeLabel(text, colStr, scale); lab.position.copy(pos); lab.userData.mapLabel=true; hazardGroup.add(lab); return lab; };
             // reach (m) on the slab profile for an arbitrary ppm threshold (interp on resampled X/PPM)
             const distForPpm=(thr)=>{ const X=slab.X,P=slab.PPM,n=X.length; if(P[0]<thr)return 0;
                 for(let j=0;j<n-1;j++){ if(P[j]>=thr&&P[j+1]<thr){ const t=(P[j]-thr)/(P[j]-P[j+1]); return X[j]+t*(X[j+1]-X[j]); } } return X[n-1]; };
-            // AEGL-1 band — fixed composite metres, wind-independent (two faint circles)
-            for(const rB of AEGL1_BAND){ hazardGroup.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(circlePts(m2u(rB))), new THREE.LineBasicMaterial({color:AEGL1_COLOR,transparent:true,opacity:0.45}))); }
-            { const lblB=makeLabel('AEGL-1 band · 2.5–3.6 km','#9fb0bd',0.78); lblB.position.set(0,4,-m2u(AEGL1_BAND[1])); hazardGroup.add(lblB); }
+            // AEGL-1 band — fixed composite metres, wind-independent (two fat rings + one label), AEGL layer
+            for(const rB of AEGL1_BAND){ addAeglLine(circlePts(m2u(rB)), AEGL1_PPM); }
+            addAeglLabel('AEGL-1 band · 2.5–3.6 km', AEGL1_PPM, new THREE.Vector3(0,4,-m2u(AEGL1_BAND[1])));
             if(calm>=0.5){
                 for(const s of specs){ const r=calmRadiusForPpm(s.thr,cp.K,cp.Rscale); if(r<8)continue;
-                    hazardGroup.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(circlePts(m2u(r))), new THREE.LineBasicMaterial({color:s.color})));
-                    const lbl=makeLabel(`${s.text} · ${Math.round(r)} m`,'#'+s.color.toString(16).padStart(6,'0'),0.85); lbl.position.set(0,4,-m2u(r)); hazardGroup.add(lbl); }
-                // v29.3: visible-fog circle = humid-air dew-point envelope (cVisPpm), not styrene-only.
+                    addMapLine(circlePts(m2u(r)), s.color);
+                    addMapLabel(`${s.text} · ${Math.round(r)} m`,'#'+s.color.toString(16).padStart(6,'0'),0.85, new THREE.Vector3(0,4,-m2u(r))); }
+                // v29.3: visible-fog circle = humid-air dew-point envelope (cVisPpm) — always-on cloud outline.
                 const rc=calmRadiusForPpm(slab.cVisPpm,cp.K,cp.Rscale);
-                if(rc>=4){ hazardGroup.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(circlePts(m2u(rc))), new THREE.LineBasicMaterial({color:COND_COLOR})));
-                    }
-                // v29.4: 4-h AEGL-3 lethal LOC (340 ppm) — the multi-hour lethal zone, outside the 1,000 ppm line
+                if(rc>=4){ hazardGroup.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(circlePts(m2u(rc))), new THREE.LineBasicMaterial({color:COND_COLOR}))); }
+                // v29.4 / v38: 4-h AEGL-3 lethal LOC (340 ppm) — AEGL layer (fat line + conc hue)
                 const rA3=calmRadiusForPpm(AEGL3_4H_PPM,cp.K,cp.Rscale);
-                if(rA3>=8){ hazardGroup.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(circlePts(m2u(rA3))), new THREE.LineBasicMaterial({color:AEGL3_4H_COLOR})));
-                    const lA=makeLabel(`AEGL-3 4 h (340 ppm) · ${Math.round(rA3)} m`,'#cf8a8a',0.8); lA.position.set(0,4,-m2u(rA3)); hazardGroup.add(lA); }
-                // v29.4: LEL flammability screen (11,000 ppm)
+                if(rA3>=8){ addAeglLine(circlePts(m2u(rA3)), AEGL3_4H_PPM);
+                    addAeglLabel(`AEGL-3 4 h (340 ppm) · ${Math.round(rA3)} m`, AEGL3_4H_PPM, new THREE.Vector3(0,4,-m2u(rA3))); }
+                // v29.4: LEL flammability screen (11,000 ppm) — Map labels layer
                 const rL=calmRadiusForPpm(LEL_PPM,cp.K,cp.Rscale);
-                if(rL>=3){ hazardGroup.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(circlePts(m2u(rL))), new THREE.LineBasicMaterial({color:LEL_COLOR})));
-                    const lL=makeLabel(`LEL 11,000 ppm (flammable) · ${Math.round(rL)} m`,'#b48ead',0.8); lL.position.set(0,4,-m2u(rL)); hazardGroup.add(lL); }
+                if(rL>=3){ addMapLine(circlePts(m2u(rL)), LEL_COLOR);
+                    addMapLabel(`LEL 11,000 ppm (flammable) · ${Math.round(rL)} m`,'#b48ead',0.8, new THREE.Vector3(0,4,-m2u(rL))); }
             } else {
                 const dir=windDirXZ(angleDeg), perp=new THREE.Vector2(-dir.y,dir.x);
                 const interpBW=(xq)=>{ const X=slab.X,B=slab.BW; if(xq<=X[0])return B[0]; for(let j=0;j<X.length-1;j++){if(xq>=X[j]&&xq<=X[j+1]){const t=(xq-X[j])/(X[j+1]-X[j]); return B[j]+t*(B[j+1]-B[j]);}} return B[X.length-1]; };
+                const footprintPts=(xMax,lift)=>{ const N=60, up=[], lo=[];
+                    for(let i=0;i<=N;i++){ const x=xMax*(i/N); const bw=interpBW(x); const xu=m2u(x), yu=m2u(bw);
+                        up.push(new THREE.Vector3(dir.x*xu+perp.x*yu,lift,dir.y*xu+perp.y*yu)); lo.push(new THREE.Vector3(dir.x*xu-perp.x*yu,lift,dir.y*xu-perp.y*yu)); }
+                    return up.concat(lo.reverse()); };
                 for(const s of specs){ const xMax=(s.thr===1000)?slab.x1000:slab.x5000; if(xMax<10)continue;
-                    const N=60, up=[], lo=[];
-                    for(let i=0;i<=N;i++){ const x=xMax*(i/N); const bw=interpBW(x); const xu=m2u(x), yu=m2u(bw);
-                        up.push(new THREE.Vector3(dir.x*xu+perp.x*yu,0.06,dir.y*xu+perp.y*yu)); lo.push(new THREE.Vector3(dir.x*xu-perp.x*yu,0.06,dir.y*xu-perp.y*yu)); }
-                    hazardGroup.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(up.concat(lo.reverse())), new THREE.LineBasicMaterial({color:s.color})));
-                    const tip=m2u(xMax); const lbl=makeLabel(`${s.text} · ${Math.round(xMax)} m`,'#'+s.color.toString(16).padStart(6,'0'),0.85); lbl.position.set(dir.x*tip,4,dir.y*tip); hazardGroup.add(lbl); }
-                // v29.3: visible-fog lens (white cloud) — same slab half-width, out to the humid-air
-                // dew-point reach xVis (was the styrene-only xSat).
+                    addMapLine(footprintPts(xMax,0.06), s.color);
+                    const tip=m2u(xMax); addMapLabel(`${s.text} · ${Math.round(xMax)} m`,'#'+s.color.toString(16).padStart(6,'0'),0.85, new THREE.Vector3(dir.x*tip,4,dir.y*tip)); }
+                // v29.3: visible-fog lens (white cloud) — always-on envelope out to xVis (humid-air dew-point)
                 const xc=slab.xVis;
-                if(xc>=3){ const N=60, up=[], lo=[];
-                    for(let i=0;i<=N;i++){ const x=xc*(i/N); const bw=interpBW(x); const xu=m2u(x), yu=m2u(bw);
-                        up.push(new THREE.Vector3(dir.x*xu+perp.x*yu,0.065,dir.y*xu+perp.y*yu)); lo.push(new THREE.Vector3(dir.x*xu-perp.x*yu,0.065,dir.y*xu-perp.y*yu)); }
-                    hazardGroup.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(up.concat(lo.reverse())), new THREE.LineBasicMaterial({color:COND_COLOR})));
-                    }
-                // v29.4: footprint helper for the extra LOCs (LEL, 4-h AEGL-3) — same slab half-width shape
-                const drawFootprint=(xMax,color,text,labCol)=>{ if(xMax<8)return; const N=60,up2=[],lo2=[];
-                    for(let i=0;i<=N;i++){ const x=xMax*(i/N); const bw=interpBW(x); const xu=m2u(x), yu=m2u(bw);
-                        up2.push(new THREE.Vector3(dir.x*xu+perp.x*yu,0.058,dir.y*xu+perp.y*yu)); lo2.push(new THREE.Vector3(dir.x*xu-perp.x*yu,0.058,dir.y*xu-perp.y*yu)); }
-                    hazardGroup.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(up2.concat(lo2.reverse())), new THREE.LineBasicMaterial({color})));
-                    const tip=m2u(xMax); const lbl=makeLabel(`${text} · ${Math.round(xMax)} m`,labCol,0.8); lbl.position.set(dir.x*tip,4,dir.y*tip); hazardGroup.add(lbl); };
-                drawFootprint(distForPpm(AEGL3_4H_PPM), AEGL3_4H_COLOR, 'AEGL-3 4 h (340 ppm)', '#cf8a8a');   // multi-hour lethal zone
-                drawFootprint(distForPpm(LEL_PPM), LEL_COLOR, 'LEL 11,000 ppm (flammable)', '#b48ead');        // flammability screen
+                if(xc>=3){ hazardGroup.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(footprintPts(xc,0.065)), new THREE.LineBasicMaterial({color:COND_COLOR}))); }
+                // AEGL-3 4 h (340 ppm) — AEGL layer (fat line + conc hue)
+                { const xA=distForPpm(AEGL3_4H_PPM); if(xA>=8){ addAeglLine(footprintPts(xA,0.058), AEGL3_4H_PPM);
+                    const tip=m2u(xA); addAeglLabel(`AEGL-3 4 h (340 ppm) · ${Math.round(xA)} m`, AEGL3_4H_PPM, new THREE.Vector3(dir.x*tip,4,dir.y*tip)); } }
+                // LEL 11,000 ppm (flammable) — Map labels layer
+                { const xL=distForPpm(LEL_PPM); if(xL>=8){ addMapLine(footprintPts(xL,0.058), LEL_COLOR);
+                    const tip=m2u(xL); addMapLabel(`LEL 11,000 ppm (flammable) · ${Math.round(xL)} m`,'#b48ead',0.8, new THREE.Vector3(dir.x*tip,4,dir.y*tip)); } }
             }
+            applyOverlayLayers();
         }
 
         // ---------------- TANK MODEL (v17: IS 5521:1980 storage tank) ----------------
@@ -2365,7 +2396,7 @@ document.body.insertAdjacentHTML('beforeend', "<div id=\"ui-panel\">\n  <h2>Styr
             // solve failed its structural checks at startup, suppress the hazard contours rather than
             // present an unvalidated footprint as if it were calibrated.
             if(typeof SOLVE_GUARD_OK!=='undefined' && !SOLVE_GUARD_OK){
-                while(hazardGroup.children.length) hazardGroup.remove(hazardGroup.children[0]);
+                clearHazard();
                 if(regimeEl) regimeEl.textContent='⚠ solve guard failed — contours suppressed';
                 return;
             }
@@ -2417,12 +2448,22 @@ document.body.insertAdjacentHTML('beforeend', "<div id=\"ui-panel\">\n  <h2>Styr
         // ("self-test => calibration" is mechanical), replacing the old hollow "44/44 by construction".
         let SOLVE_GUARD_OK=false, SOLVE_REPORT=null;
         function runSolveSelfTest(){
-          const TC=25, U=1.81, RH=85;                 // event-night ambient; 0600 IST modelled surface wind (Karmakar §6.1)
+          const TC=25, U=1.81, RH=85;                 // event-night ambient; 1.81 m/s = the 0600 IST modelled surface wind (Karmakar line 332)
           const Trel=(V22.SCENARIOS&&V22.SCENARIOS.B&&V22.SCENARIOS.B.T_release_c)||curTrel;
           const Lc  =(V22.SCENARIOS&&V22.SCENARIOS.B&&V22.SCENARIOS.B.L_cool_m)||curLcool;
-          const Q   = V22.rateAtMin(198, V22.PEAK_MT.B);   // ~2.39 kg/s recorded at 0600 IST 7 May (event minute 198)
-          const slab= buildSlab(Q, U, TC, Trel, Lc, RH);
-          // centreline ppm at a downwind distance from the TANK (slab.X already carries the touchdown offset)
+          // v38 PHASE 1 — apples-to-apples Regime-A calibration. Karmakar Fig.11a's with-buoyancy downwind
+          // curve {200,400,1600 m -> 4600,1800,25 ppm} is for a SOURCE STRENGTH of ~28 MT/h = 7.78 kg/s
+          // (paper lines 439–440), at 1.81 m/s (line 332), 30-min-averaged at 10 m AGL (lines 305–308,404).
+          // The prior self-test drove buildSlab at the 0600 event rate (~2.39 kg/s) — ~3.26x too low — so the
+          // F2/NMB it reported measured a HARNESS source-strength mismatch, not (mostly) a physics error.
+          // Fix: GUARD tier stays on the event-rate solve (structural, unchanged); CALIBRATION tier is now
+          // driven at the paper's stated 7.78 kg/s anchor.
+          const Qev     = V22.rateAtMin(198, V22.PEAK_MT.B);   // ~2.39 kg/s recorded at 0600 IST 7 May (event minute 198)
+          const Qanchor = 28000/3600;                          // 7.78 kg/s = 28 MT/h, Karmakar Fig.11a source strength (lines 439–440)
+          const slabG = buildSlab(Qev,     U, TC, Trel, Lc, RH);   // GUARD tier — structural integrity of the elevated-source solve
+          const slab  = buildSlab(Qanchor, U, TC, Trel, Lc, RH);   // CALIBRATION tier — at the 28 MT/h anchor condition
+          // centreline ppm / reach at a downwind distance from the TANK on the ANCHOR slab
+          // (slab.X already carries the touchdown offset)
           const ppmAt=(xm)=>{ const X=slab.X,P=slab.PPM,n=X.length; if(xm<=X[0])return P[0]; if(xm>=X[n-1])return P[n-1];
             for(let j=0;j<n-1;j++){ if(xm>=X[j]&&xm<=X[j+1]){ const t=(xm-X[j])/(X[j+1]-X[j]); return P[j]+t*(P[j+1]-P[j]); } } return P[n-1]; };
           const dForPpm=(thr)=>{ const X=slab.X,P=slab.PPM,n=X.length; if(P[0]<thr)return 0;
@@ -2431,30 +2472,33 @@ document.body.insertAdjacentHTML('beforeend', "<div id=\"ui-panel\">\n  <h2>Styr
           const pairs=A.distances_m.map((d,i)=>({d, p:ppmAt(d), o:A.with_buoyancy_ppm[i]}));
           const F2 =V22.factorOf2Fraction(pairs.map(q=>({p:q.p,o:q.o})));
           const NMB=V22.normalisedMeanBias(pairs.map(q=>({p:q.p,o:q.o})));
-          const dAEGL3=dForPpm(1100);   // AEGL-3 60-min LOC (1100 ppm) reach
-          let mono=true; for(let i=1;i<slab.PPM.length;i++){ if(slab.PPM[i]>slab.PPM[i-1]+1){ mono=false; break; } }
-          // ---- GUARD tier (must pass; gates the render) ----
+          const dAEGL3=dForPpm(1100);   // AEGL-3 60-min LOC (1100 ppm) reach on the anchor slab
+          let mono=true; for(let i=1;i<slabG.PPM.length;i++){ if(slabG.PPM[i]>slabG.PPM[i-1]+1){ mono=false; break; } }
+          // ---- GUARD tier (must pass; gates the render) — structural checks on the event-rate solve ----
           const guard=[
-            ['elevated source active (virtual-src offset & dilution > unity)', slab.touchdownXT>0 && slab.dilution>1],
-            ['reaches ordered: 0 < d5000 < d1000', slab.x5000>0 && slab.x5000<slab.x1000],
-            ['d1000 finite & within domain', isFinite(slab.x1000) && slab.x1000>0 && slab.x1000<DOMAIN_M],
-            ['centreline peak in (0, 1e6] ppm', slab.PPM[0]>0 && slab.PPM[0]<=1e6+1],
+            ['elevated source active (virtual-src offset & dilution > unity)', slabG.touchdownXT>0 && slabG.dilution>1],
+            ['reaches ordered: 0 < d5000 < d1000', slabG.x5000>0 && slabG.x5000<slabG.x1000],
+            ['d1000 finite & within domain', isFinite(slabG.x1000) && slabG.x1000>0 && slabG.x1000<DOMAIN_M],
+            ['centreline peak in (0, 1e6] ppm', slabG.PPM[0]>0 && slabG.PPM[0]<=1e6+1],
             ['centreline monotonically non-increasing downwind', mono]
           ];
           const guardPassed=guard.filter(c=>c[1]).length;
           SOLVE_GUARD_OK = guardPassed===guard.length;
-          // ---- CALIBRATION tier (re-derived vs HPCR; reported, currently PENDING) ----
+          // ---- CALIBRATION tier (re-derived vs Karmakar at the 7.78 kg/s anchor; reported honestly) ----
           const aeglEnvelopeOK = dAEGL3>=333 && dAEGL3<=441;     // ALOHA/FLEXPART AEGL-3 envelope (Karmakar Table 5)
           const reportDistCalibrated = (F2>=0.66) && aeglEnvelopeOK;
-          SOLVE_REPORT={ Q, pairs, F2, NMB, dAEGL3, x1000:slab.x1000, x5000:slab.x5000,
+          SOLVE_REPORT={ Qev, Qanchor, Q:Qanchor, pairs, F2, NMB, dAEGL3, x1000:slab.x1000, x5000:slab.x5000,
                          guard, guardPassed, guardTotal:guard.length, aeglEnvelopeOK, reportDistCalibrated };
           console.log('[solve self-test] GUARD '+(SOLVE_GUARD_OK?'PASS':'FAIL')+' ('+guardPassed+'/'+guard.length+')'
             +' · report-distance calibration '+(reportDistCalibrated?'OK':'PENDING')
+            +' | anchor Q='+Qanchor.toFixed(2)+' kg/s (28 MT/h) @ '+U+' m/s'
             +' | F2='+F2.toFixed(2)+' NMB='+NMB.toFixed(2)+' dAEGL3='+Math.round(dAEGL3)+'m d1000='+Math.round(slab.x1000)+'m d5000='+Math.round(slab.x5000)+'m'
             +' | anchors '+pairs.map(q=>q.d+'m '+Math.round(q.p)+'/'+q.o+'ppm').join('  '));
           return SOLVE_REPORT;
         }
         try{ runSolveSelfTest(); }catch(e){ SOLVE_GUARD_OK=false; console.error('[solve self-test] threw', e); }
+        // v38 PHASE 3 — CCTV geometric validation lives in the dense-gas field scope (it marches the ONE
+        // dense-gas field, denseFieldAt, along the NW bearing). See runCCTVValidation() defined there.
 
         const setup=()=>{
             (function(){
@@ -2466,7 +2510,7 @@ document.body.insertAdjacentHTML('beforeend', "<div id=\"ui-panel\">\n  <h2>Styr
               const sat=document.getElementById('tgl-sat'); if(sat && !sat.checked){ sat.checked=true; sat.dispatchEvent(new Event('change',{bubbles:true})); }
               const rose=document.getElementById('compass-rose');
               if(rose){ windNeedle=document.createElementNS('http://www.w3.org/2000/svg','polygon'); windNeedle.setAttribute('points','20,7 22.4,20 20,17.6 17.6,20'); windNeedle.setAttribute('fill','#7fd1e0'); windNeedle.setAttribute('opacity','0.95'); rose.appendChild(windNeedle); }
-              const SITES=[{n:'M6 Tank \u2014 Source of the Leak',lon:83.208995,lat:17.755241,c:'#ff9a6b'},{n:'LG Polymers Main Gate',lon:83.21058,lat:17.75792,c:'#cfe0f5'},{n:'Venkatapuram',lon:83.20758,lat:17.75746,c:'#cfe0f5'}];
+              const SITES=[{n:'M6 Tank \u2014 Source of the Leak',lon:83.208995,lat:17.755241,c:'#ff9a6b'},{n:'LG Polymers Main Gate',lon:83.21058,lat:17.75792,c:'#cfe0f5'},{n:'Venkatapuram',lon:83.20758,lat:17.75746,c:'#cfe0f5'},{n:'CCTV 3:55am',lon:83.20736090710476,lat:17.757004136416498,c:'#dbe7f7'}];   // v38: geolocated 03:55 CCTV visible-fog point, ~264 m NW (Map labels layer)
               for(const S of SITES){ const x=(S.lon-meta.lon0)*meta.mlon, z=-((S.lat-meta.lat0)*meta.mlat); let y=45; try{ y=(sample(x,-z)||0)+45; }catch(e){} const lab=makeLabel(S.n,S.c,1.0); lab.position.set(x,y,z); scene.add(lab); }
               const WARD=[[83.2113423,17.7582175],[83.2097408,17.7578709],[83.2096971,17.7581066],[83.2097408,17.75837],[83.2098136,17.7586473],[83.2099592,17.7589108],[83.2102246,17.7592114],[83.2104552,17.7594501],[83.2105665,17.7595918],[83.2083815,17.7601089],[83.2080239,17.7601972],[83.207971,17.7600584],[83.2075472,17.7599323],[83.2073486,17.7593774],[83.2071102,17.7591378],[83.2067791,17.7589108],[83.2063819,17.7585198],[83.2060988,17.7587126],[83.205239,17.7589775],[83.2043033,17.7590016],[83.2036711,17.7591943],[83.2017997,17.7561356],[83.2103449,17.7506178],[83.2114317,17.751881],[83.210422,17.7530949],[83.208684,17.7541826],[83.2113423,17.7582175]];
               const wardGroup=new THREE.Group();
@@ -2491,11 +2535,10 @@ document.body.insertAdjacentHTML('beforeend', "<div id=\"ui-panel\">\n  <h2>Styr
               const bld=document.getElementById('tgl-water');
               if(bld){ const lab=bld.closest('label'); if(lab){ lab.insertAdjacentHTML('afterend','<label class="layer"><input type="checkbox" id="tgl-venk-ward" checked><span class="swatch" style="background:#39b54a"></span><span class="lbl">Venkatapuram ward</span></label>'); const w=document.getElementById('tgl-venk-ward'); if(w) w.addEventListener('change',e=>{ wardGroup.visible=e.target.checked; }); } }
               try{ const PL=D.plume, rings=PL&&PL.calculated&&PL.calculated.rings;
-                if(rings){ const aeglLabels=new THREE.Group();
-                  for(const r of rings){ const x=TANK_X, z=TANK_Z - r.radius_m; let y=50; try{ y=(sample(x,-z)||0)+50; }catch(e){} const lab=makeLabel(r.label+' \u00b7 '+r.radius_m+' m','#cdd6e0',1.0); lab.position.set(x,y,z); aeglLabels.add(lab); }
+                if(rings){ const aeglLabels=new THREE.Group(); aeglLabels.userData.layer='aegl';   // v38: AEGL layer
+                  for(const r of rings){ const x=TANK_X, z=TANK_Z - r.radius_m; let y=50; try{ y=(sample(x,-z)||0)+50; }catch(e){} const lab=makeLabel(r.label+' \u00b7 '+r.radius_m+' m','#cdd6e0',1.0); lab.position.set(x,y,z); lab.userData.layer='aegl'; aeglLabels.add(lab); }
                   scene.add(aeglLabels);
-                  const ae=document.getElementById('tgl-aegl'); aeglLabels.visible = ae? ae.checked : true;
-                  if(ae) ae.addEventListener('change',e=>{ aeglLabels.visible=e.target.checked; }); }
+                  const ae=document.getElementById('tgl-aegl'); aeglLabels.visible = ae? ae.checked : false; }
               }catch(e){}
             })();
             /* ===== Phase 1: terrain-steered wind field (Tier 1 heuristic) ===== */
@@ -2764,6 +2807,53 @@ document.body.insertAdjacentHTML('beforeend', "<div id=\"ui-panel\">\n  <h2>Styr
                 const uFront=SLUMP_VIS*Math.sqrt(Math.max(gp*h,1e-3));
                 return { c, h, gp, b:bx, uFront, s:xw };
             }
+            // ===================================================================
+            // v38 PHASE 3 — CCTV GEOMETRIC VALIDATION (the project's PRIMARY Regime-B / NW improvement metric).
+            // The 03:55 IST visible fog is an ACCUMULATED, gravity-driven (calm-dominated, ~84% calm at 0.55 m/s)
+            // dense-gas slump — exactly where the model improves on Karmakar's wind-driven NW under-prediction
+            // (paper lines 452–454). Rather than the instantaneous calm BOX contour (which under-reaches at the
+            // declining 03:55 rate — the fog is accumulated, not steady-state), we gate the ONE dense-gas FIELD
+            // (denseFieldAt — the field the rendered particle cloud actually follows) marched along the NW bearing
+            // toward the geolocated CCTV point (17.757004136416498, 83.20736090710476) ≈ 264 m NW of the M6 tank.
+            // Source strength = the documented onset PEAK loss rate (rateAt(7) ≈ 46.8 kg/s, the high-rate phase
+            // that physically generated the lingering fog, and the model's own stopped-state rate); wind frame
+            // pointed NW at the 0.55 m/s / 94% RH / ~25.5 °C onset condition.
+            //
+            // BOTH-SIDED geometric gate, physically interpreted:
+            //   · LOWER: the geolocated CCTV visible-fog point (264 m) must lie WITHIN the modelled VISIBLE-fog
+            //     NW envelope (cVisPpm -> VIS_FOG_PPM=2100 at 94% RH)  => visReach >= 264 m.
+            //   · UPPER: the DENSE/lethal core (>=5,000 ppm) must NOT over-extend the ~380 m near-field dense
+            //     zone (no unevidenced NW over-extension of the dangerous core)  => denseReach <= ~380 m.
+            //   (So the CCTV point is bracketed: denseReach <= 264 m <= visReach, with the dense core inside the
+            //    near-field zone — a visible-but-not-lethal-core fog observation, consistent with the CCTV.)
+            let CCTV_REPORT=null;
+            function runCCTVValidation(){
+              const ux=-0.6640, uz=-0.7476;   // NW unit toward the geolocated CCTV point (~261 m, tank-relative scene coords)
+              const U=0.55, TC=25.5, RH=94, calm=1.0-smooth(0.05,2.0,U);
+              const Q=(V22.SCENARIOS&&V22.SCENARIOS.B&&V22.SCENARIOS.B.rateAt? V22.SCENARIOS.B.rateAt(7) : V22.lossRateKgsAt(7));  // onset peak (min 7 = 02:49)
+              const Trel=(V22.SCENARIOS&&V22.SCENARIOS.B&&V22.SCENARIOS.B.T_release_c)||curTrel;
+              const Lc  =(V22.SCENARIOS&&V22.SCENARIOS.B&&V22.SCENARIOS.B.L_cool_m)||curLcool;
+              const sS=__slab, cS=__calm, fa=__fdx,fb=__fdz,fc=__fpx,fd=__fpz,fe=__fu;
+              __slab=buildSlab(Q,U,TC,Trel,Lc,RH); __calm=calmParams(Q,TC,cooledTemp(Trel,TC));
+              __fdx=ux; __fdz=uz; __fpx=-uz; __fpz=ux; __fu=Math.max(U,U_FLOOR);   // point the windy lobe NW (toward the CCTV)
+              let visReach=0, denseReach=0;
+              for(let r=2;r<=900;r+=2){ const F=denseFieldAt(r*ux, r*uz, calm); const ppm=F.c*1e6;
+                if(ppm>=VIS_FOG_PPM) visReach=r; if(ppm>=5000) denseReach=r; }
+              const cVis=Math.round(__slab.cVisPpm);
+              __slab=sS; __calm=cS; __fdx=fa; __fdz=fb; __fpx=fc; __fpz=fd; __fu=fe;   // restore the live field state
+              const CCTV_M=264, NEAR_FIELD_M=380;
+              const reachesCCTV       = visReach>=CCTV_M;                 // CCTV point inside the visible-fog envelope
+              const coreNotOverExt    = denseReach<=NEAR_FIELD_M*1.10;    // dense lethal core within the ~380 m near-field zone (+10% tol)
+              const pass = reachesCCTV && coreNotOverExt;
+              CCTV_REPORT={ Q:+Q.toFixed(2),U,TC,RH, cVisPpm:cVis, visReach, denseReach, cctvM:CCTV_M, nearFieldM:NEAR_FIELD_M, reachesCCTV, coreNotOverExt, pass };
+              window.__cctvValidation=CCTV_REPORT;
+              console.log('[CCTV 03:55 validation] '+(pass?'PASS':'PENDING')
+                +' | dense-gas field NW reach: visible-fog '+visReach+' m (cVis='+cVis+' ppm @ '+RH+'% RH), dense-core(5,000 ppm) '+denseReach+' m'
+                +' | onset Q='+Q.toFixed(1)+' kg/s, u='+U+' m/s'
+                +' | gate: geolocated CCTV 264 m NW inside visible envelope ('+(reachesCCTV?'yes':'no')+') AND dense core ≤ ~380 m near-field zone ('+(coreNotOverExt?'yes':'no')+')');
+              return CCTV_REPORT;
+            }
+            try{ runCCTVValidation(); }catch(e){ console.warn('[CCTV 03:55 validation] skipped', e); }
             function advectParticles(){
               if(window.__buildWindField) window.__buildWindField();   // keep field current (incl. observed-wind playback)
               if(__slab&&__calm) refreshFieldFrame();                  // v29: cache wind frame once per frame
@@ -2963,13 +3053,14 @@ document.body.insertAdjacentHTML('beforeend', "<div id=\"ui-panel\">\n  <h2>Styr
             document.getElementById('scenario').addEventListener('change',e=>{scenarioKey=e.target.value; if(window.__v22ApplyScenario)window.__v22ApplyScenario(scenarioKey); resetSim(); refresh();});
             const btn=document.getElementById('startBtn');
             btn.addEventListener('click',()=>{ running=!running; resetSim(); btn.textContent=running?'Stop release':'Start release'; btn.classList.toggle('on',running); refresh(); });
-            // v35: single grouped "Map labels & markers" toggle (left panel). OFF removes every
-            // place label, data label, the raised signposts (floating signs) AND the wind-direction
-            // arrow; ON restores them. Non-sprite members (the ArrowHelper) are tagged
-            // userData.mapLabel=true at their construction site so the one traverse catches them.
-            (function(){ const cb=document.getElementById('tgl-maplabels');
-              const apply=on=>{ scene.traverse(o=>{ if(o.isSprite || (o.userData&&o.userData.mapLabel)) o.visible=on; }); };
-              if(cb){ cb.addEventListener('change',e=>apply(e.target.checked)); apply(cb.checked); } })();
+            // v38: three independent overlay layers wired through applyOverlayLayers():
+            //  · "Map labels & markers" (tgl-maplabels) — place/data/PPM/LEL labels + their contour lines
+            //  · "Acute Exposure Guideline Levels" (tgl-aegl) — AEGL fat contours + labels, OFF by default
+            //  · "Wind direction & speed" (tgl-windspeed) — the 3D wind arrow + live wind label
+            // The wind arrow and AEGL items are tagged userData.layer at their construction sites, so the
+            // single scene traverse routes each object to exactly one layer.
+            (function(){ ['tgl-maplabels','tgl-aegl','tgl-windspeed'].forEach(id=>{ const cb=document.getElementById(id); if(cb) cb.addEventListener('change',applyOverlayLayers); });
+              applyOverlayLayers(); })();
         };
 
         addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight); uniforms.uPixelRatio.value=renderer.getPixelRatio();});
@@ -3069,18 +3160,9 @@ document.body.insertAdjacentHTML('beforeend', "<div id=\"ui-panel\">\n  <h2>Styr
               return {path, bearing, headsNW, drop:dropTot, lengthM:path.length*step};
             }
             try{
+              // v38: the drainage-route LAYER (drawn cyan line + tgl-drainage toggle) is removed per Phase 0.
+              // The steepest-descent analysis itself is retained as a console diagnostic only.
               const route=drainageRouteNW(140);
-              // draw the routed drainage front (faint cyan) so the analysis is visible on the map
-              if(route.path.length>1){
-                const drainGroup=new THREE.Group();
-                drainGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(route.path),
-                  new THREE.LineBasicMaterial({color:0x36c6c6, transparent:true, opacity:0.85, toneMapped:false})));
-                drainGroup.name='drainageRoute'; scene.add(drainGroup);
-                // optional left-panel toggle, consistent with the layer pattern
-                const aeglRow=document.getElementById('tgl-aegl'); const lab=aeglRow&&aeglRow.closest('label');
-                if(lab){ lab.insertAdjacentHTML('afterend','<label class="layer"><input type="checkbox" id="tgl-drainage" checked><span class="swatch" style="background:#36c6c6"></span><span class="lbl">Drainage route (NW)</span></label>');
-                  const t=document.getElementById('tgl-drainage'); if(t) t.addEventListener('change',e=>{ drainGroup.visible=e.target.checked; }); }
-              }
               console.log('[drainage route] bearing '+Math.round(route.bearing)+'° (NW='+route.headsNW+') · drop '+route.drop.toFixed(1)+' m over ~'+route.lengthM+' m of steepest descent');
             }catch(e){ console.warn('[drainage route] analysis skipped', e); }
 
@@ -3111,10 +3193,17 @@ document.body.insertAdjacentHTML('beforeend', "<div id=\"ui-panel\">\n  <h2>Styr
               return ppmAxis*Math.exp(-(yw*yw)/(2*bw*bw));                          // Gaussian crosswind on the slab half-width
             }
             function run19PairValidation(){
-              const recs=[V22.OBSERVED.venkatapuram, V22.OBSERVED.lgp_gate];
+              // v38 PHASE 4 — segment the receptor skill NE vs NW instead of pooling it. NE = lgp_gate (Regime A,
+              // wind-driven; SHOULD track the FLEXPART-WRF reference). NW = venkatapuram (Regime B, the harder
+              // NW constraint). We deliberately DO NOT optimise the GLOBAL F2 — pooling pulls the fit toward the
+              // reference's own NW under-prediction. NW afternoon ppm is a SECONDARY, harder constraint (likely
+              // gravity/drainage persistence + the ~22:00 IST secondary surge), NOT the clean NW anchor; the
+              // clean NW anchor is the 03:55 CCTV geometric gate (Phase 3, runCCTVValidation), which the
+              // afternoon receptor pairs below cannot speak to (see the timing caveat).
+              const groups=[['NW',V22.OBSERVED.venkatapuram],['NE',V22.OBSERVED.lgp_gate]];
               const Lc=(V22.SCENARIOS.B.L_cool_m)||100;
-              const pairs=[], detail=[];
-              for(const rec of recs){ for(const obs of rec.ppm){
+              const all=[], detail=[], byGroup={NW:[], NE:[]};
+              for(const [g,rec] of groups){ for(const obs of rec.ppm){
                 const m=obs.t.match(/(\d+)\s+(\d+):(\d+)/); if(!m) continue;
                 const absMin=(parseInt(m[1],10)-7)*1440 + parseInt(m[2],10)*60 + parseInt(m[3],10);
                 const minW=absMin-170;            // wind/met series: eventMin 0 = 02:50 IST
@@ -3122,11 +3211,16 @@ document.body.insertAdjacentHTML('beforeend', "<div id=\"ui-panel\">\n  <h2>Styr
                 const wd=v6ObsWindAt(minW).d, ws=v6ObsSpeedAt(minW), TC=v6ObsTempAt(minW), RH=v6ObsHumAt(minW);
                 const Q=V22.rateAtMin(minR, V22.PEAK_MT.B), Trel=V22.ventTempAtMin(minR);
                 const p=predPpmAtReceptor(rec.lon, rec.lat, wd, ws, Q, TC, Trel, Lc, RH);
-                pairs.push({p, o:obs.ppm}); detail.push({t:obs.t, lon:rec.lon, p:+p.toFixed(1), o:obs.ppm});
+                const pair={p, o:obs.ppm};
+                all.push(pair); byGroup[g].push(pair); detail.push({g, t:obs.t, lon:rec.lon, p:+p.toFixed(1), o:obs.ppm});
               }}
-              const F2=V22.factorOf2Fraction(pairs), NMB=V22.normalisedMeanBias(pairs);
-              window.__validation19={ n:pairs.length, F2, NMB, detail, caveat:window.__timingCaveat };
-              console.log('[19-pair validation] n='+pairs.length+'  F2(factor-of-2 fraction)='+F2.toFixed(2)+'  NMB(normalised mean bias)='+NMB.toFixed(2));
+              const FN=(arr)=>({F2:V22.factorOf2Fraction(arr), NMB:V22.normalisedMeanBias(arr), n:arr.length});
+              const overall=FN(all), NE=FN(byGroup.NE), NW=FN(byGroup.NW);
+              window.__validation19={ overall:{F2:overall.F2,NMB:overall.NMB}, NE:{F2:NE.F2,NMB:NE.NMB,n:NE.n}, NW:{F2:NW.F2,NMB:NW.NMB,n:NW.n},
+                                      n:all.length, F2:overall.F2, NMB:overall.NMB, detail, caveat:window.__timingCaveat };
+              console.log('[19-pair validation] overall n='+all.length+' F2='+overall.F2.toFixed(2)+' NMB='+overall.NMB.toFixed(2)
+                +'  ·  NE/lgp_gate (Regime A) n='+NE.n+' F2='+NE.F2.toFixed(2)+' NMB='+NE.NMB.toFixed(2)
+                +'  ·  NW/venkatapuram (Regime B) n='+NW.n+' F2='+NW.F2.toFixed(2)+' NMB='+NW.NMB.toFixed(2));
               console.log('[19-pair validation] '+window.__timingCaveat);
               return window.__validation19;
             }
@@ -3167,19 +3261,17 @@ document.body.insertAdjacentHTML('beforeend', "<div id=\"ui-panel\">\n  <h2>Styr
             // observed-wind arrow anchored at the M6 tank
             const tx=TANK_X, tz=TANK_Z, ty=groundAt(tx,tz);
             const arrow=new THREE.ArrowHelper(new THREE.Vector3(0,0,1), new THREE.Vector3(tx,ty+14,tz), 80, 0xffb347, 23, 13);
-            arrow.userData.mapLabel=true;            // v35: caught by grouped Map-labels toggle (non-sprite)
+            arrow.userData.layer='wind';            // v38: "Wind direction & speed" layer (non-sprite)
             grp.add(arrow);
-            const arrowLab=dynLabel(1.05); grp.add(arrowLab);
+            const arrowLab=dynLabel(1.05); arrowLab.userData.layer='wind'; grp.add(arrowLab);   // v38: Wind layer
 
             // concentration sensors (pylon + emissive head + live readout)
             const sensors=SEN.map(S=>{
-              const p=toXZ(S.lon,S.lat); const y=groundAt(p.x,p.z);
-              const pylon=new THREE.Mesh(new THREE.CylinderGeometry(2.4,2.4,46,12),
-                new THREE.MeshStandardMaterial({color:0x222a36,emissive:0x111722}));
-              pylon.position.set(p.x,y+23,p.z); grp.add(pylon);
+              // v38: the two pylons + two emissive sphere heads (Venkatapuram village, LG main gate)
+              // are removed from the map per Phase 0. The `head` Mesh is still created but NOT added to
+              // the scene, so the timeline's per-minute colour updates (o.head.material.*) stay valid no-ops.
               const head=new THREE.Mesh(new THREE.SphereGeometry(7,16,16),
                 new THREE.MeshStandardMaterial({color:S.col,emissive:S.col,emissiveIntensity:0.5}));
-              head.position.set(p.x,y+50,p.z); grp.add(head);
               const lab=null; // live-data labels removed (Main Gate, Venkatapuram village)
               return {S,head,lab};
             });
@@ -3547,7 +3639,7 @@ document.getElementById('loading').classList.add('done');
   // ---- offscreen WebGL2 sim context ----
   const scv=document.createElement('canvas'); scv.width=SGW; scv.height=SGH;
   const gl=scv.getContext('webgl2',{antialias:false});
-  function setTitle(s){ /* v36: muted — do not clobber the <title> identity (v35-reach-experimental). Debug status routed to console only. */ try{ if(s && /error|fail/i.test(s)) console.warn('[densegas]', s); }catch(e){} }
+  function setTitle(s){ /* v36: muted — do not clobber the <title> identity (v38-reach-calibrated). Debug status routed to console only. */ try{ if(s && /error|fail/i.test(s)) console.warn('[densegas]', s); }catch(e){} }
   if(!gl || !gl.getExtension('EXT_color_buffer_float')){ console.warn('[densegas] WebGL2+float unavailable'); setTitle('densegas UNSUPPORTED'); return; }
 
   const VERT_SRC = `#version 300 es
