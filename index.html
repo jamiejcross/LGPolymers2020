@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>LG Polymers, Visakhapatnam — Styrene Release Reconstruction (v38-reach-calibrated)</title>
+<title>LG Polymers, Visakhapatnam — Styrene Release Reconstruction (v45-dilute-edge-opacity)</title>
 <style>
   :root {
     --panel-bg: rgba(16, 22, 28, 0.78);
@@ -103,8 +103,8 @@
   <label class="layer"><input type="checkbox" id="tgl-water" checked><span class="swatch" style="background:#5f9ec7"></span><span class="lbl">Water</span></label>
   <label class="layer"><input type="checkbox" id="tgl-lg" checked><span class="swatch" style="background:#d65108"></span><span class="lbl">LG Polymers ward</span></label>
   <label class="layer"><input type="checkbox" id="tgl-aegl"><span class="swatch" style="background:linear-gradient(90deg,#ebcb8b,#e08a3c,#bf616a)"></span><span class="lbl">Acute Exposure Guideline Levels</span></label>
-  <label class="layer"><input type="checkbox" id="tgl-maplabels" checked><span class="swatch" style="background:#cfe0f5"></span><span class="lbl">Map labels &amp; markers</span></label>
-  <label class="layer"><input type="checkbox" id="tgl-windspeed" checked><span class="swatch" style="background:#7fd1e0"></span><span class="lbl">Wind direction &amp; speed</span></label>
+  <label class="layer"><input type="checkbox" id="tgl-maplabels"><span class="swatch" style="background:#cfe0f5"></span><span class="lbl">Map labels &amp; markers</span></label>
+  <label class="layer"><input type="checkbox" id="tgl-windspeed"><span class="swatch" style="background:#7fd1e0"></span><span class="lbl">Wind direction &amp; speed</span></label>
   <label class="layer"><input type="checkbox" id="tgl-densegas"><span class="swatch" style="background:linear-gradient(90deg,#000004,#b6377a,#fca50a,#fcffa4)"></span><span class="lbl">Dense-gas layer (Stage D)</span></label>
   <label class="layer"><input type="checkbox" id="tgl-windfield"><span class="swatch" style="background:#7fd1e0"></span><span class="lbl">Wind field (terrain-steered)</span></label>
   <label class="layer" style="display:none"><input type="checkbox" id="tgl-overlay" disabled><span class="swatch"></span><span class="lbl">Temperature overlay</span></label>
@@ -192,8 +192,254 @@
    340 ppm (the multi-hour LOC, ~2x the 60-min zone) per the Doc 02 §1 AEGL table; (4) the AEGL-1
    zone drawn as the reported 2.5-3.6 km band, not a single ring (Doc 03 §5.6). SLAB engine still frozen.
    -------------------------------------------------------------------------------------------------
-   v38-reach-calibrated — PROVENANCE LEDGER (updated 2026-06-21). Identity reconciled: VERSION, the
-   <title> and this banner all read v38-reach-calibrated. GOAL: this model is NOT trying to REPRODUCE
+   v45-dilute-edge-opacity — PROVENANCE LEDGER (updated 2026-06-22). Identity reconciled: VERSION, the
+   <title> and this banner ALL read v45-dilute-edge-opacity (their prior mismatch was a defect that was
+   deliberately fixed; keeping the three in lockstep is a hard project rule). This is the ACTIVE banner;
+   the v44 header below is retained UNCHANGED as history (it carried the lockstep claim at the time).
+
+   v44 -> v45 MOVE: ONE DISPLAY/OPACITY-ONLY change — re-couple parcel ALPHA to concentration so the
+   dilute aged leading edge renders optically thin (translucent) instead of as a saturated pale blob.
+   Nothing touches buildSlab, the source term, denseFieldAt's geometry/F.c, the contour thresholds/
+   reaches, the AEGL ramp, the transport (dynamics still use F.s/dist), the conc[]/birthConc stamping or
+   the v44 puff-age decay, or any validator input — so the three validators print BIT-IDENTICAL numbers
+   (re-verified, see below).
+     · THE v44 RESIDUAL. v44 fixed the conc[] MAGNITUDE (densest-at-source, faint-leading-edge), but the
+       leading bulb still read as a pale centre rimmed in orange. CAUSE (rendering, not concentration):
+       the live parcel cloud is the NormalBlending ShaderMaterial plumeMesh (THREE.Points, depthWrite
+       off). Per-sprite alpha was vaporGhost = clamp(0.30 + 0.50*smoothstep(120,6000,ppm), 0.30, 0.92) —
+       the dilute aged gas was FLOORED at 0.30 alpha. Under src-over, deep overlap of those light-cream
+       (SCALE_LO) sprites saturated the bulb interior to flat opaque cream (pale centre) while the thin
+       silhouette stayed translucent and showed the orange body behind (orange rim). Colour and opacity
+       were out of step: the dilute gas was too OPAQUE for how LIGHT it is.
+     · THE v45 FIX. vaporGhost = clamp(0.12 + 0.80*smoothstep(40,1500,ppm), 0.12, 0.92). Physically: low
+       concentration ⇒ low optical depth ⇒ translucent. By band — leading edge (20–100 ppm): 0.30 -> ~0.12,
+       so the aged bulb becomes a faint terrain-revealing wisp and the rim/centre contrast collapses;
+       orange body (~500 ppm): ~0.31 -> ~0.31, unchanged, mid-cloud keeps its weight; dense core
+       (≥1500 ppm): still caps at 0.92, so the validated dark source core is visually identical. This
+       MITIGATES (does not fully erase) the billboard silhouette effect, which is geometric; it removes the
+       saturated pale fill that made it noticeable. COLOUR IS UNTOUCHED — vColor, the SCALE_LO/MID/HI ramp
+       and the log10(ppm) map are unchanged; only the alpha (vAlpha via vaporGhost) changed.
+     · UNCHANGED & RE-VERIFIED: runCCTVValidation (PASS, 664 m / 226 m), runSolveSelfTest (GUARD 5/5,
+       F2=1.00 NMB=-0.20 dAEGL3=430m d1000=453m d5000=168m) and run19PairValidation (F2=0.13 NMB=1.01 ·
+       NE 0.25/3.80 · NW 0.00/-0.65) all read fixed anchor args into buildSlab and never read parcel
+       alpha — bit-identical to v44/v43.
+   -------------------------------------------------------------------------------------------------
+   v44-puff-age-dilution — PROVENANCE LEDGER (updated 2026-06-22). Identity reconciled: VERSION, the
+   <title> and this banner ALL read v44-puff-age-dilution (their prior mismatch was a defect that was
+   deliberately fixed; keeping the three in lockstep is a hard project rule). This is the ACTIVE banner;
+   the v43 header below is retained UNCHANGED as history (it carried the lockstep claim at the time).
+
+   v43 -> v44 MOVE: ONE DISPLAY/COLOUR-ONLY change — age/travel-decay of the parcel birth-concentration
+   boost (puff vs plume). Nothing touches buildSlab, the source term, denseFieldAt's geometry/F.c, the
+   contour thresholds/reaches, the AEGL ramp, the transport (dynamics still use F.s/dist), the v43
+   birthConc stamping / aBirthConc attribute or any validator input — so the three validators print
+   BIT-IDENTICAL numbers (re-verified, see below).
+     · THE v43 ARTIFACT. v43 coloured each parcel conc[i] = F.c * (birthConc/liveQ) with F.c the LIVE
+       field at the parcel's CURRENT position and birthConc/liveQ a birth-strength rescale. That boost
+       was STATIC: it NEVER decayed. Late in the event liveQ is small, so onset-peak parcels (~25x birth
+       strength) — which are the OLDEST and sit at the leading edge / outer envelope where the live field
+       F.c is DILUTE — got F.c multiplied ~25x and saturated the top of the shade ramp. The most-diluted
+       aged gas was painted darkest and the genuinely-densest fresh source core lighter: an INVERTED
+       gradient with a thin dark rim capping the leading edge. That was a COLOUR ARTIFACT, not physics.
+     · THE v44 FIX (physical, not a fudge). A peaked release matters precisely because the onset slug
+       travels downwind as a FINITE PUFF, and a finite puff dilutes FASTER than a steady plume because it
+       also spreads ALONG-WIND. Gaussian centrelines: C_plume ∝ Q/(u·σy·σz) vs C_puff ∝ M/(σx·σy·σz) —
+       the puff carries an EXTRA along-wind dilution by σx the plume omits. v43 reuses the steady-plume
+       cross-wind dilution shape (that's F.c — correct, kept) but omitted this longitudinal σx dilution,
+       so the boost never faded. v44 attenuates ONLY the boost-above-the-field by a travel-decayed
+       puff/plume factor φ(x)=1/(1+x/PUFF_DECAY_M): conc = F.c·(1 + (r0-1)·φ), r0=birthConc/liveQ. At the
+       source (s→0) φ→1 and conc→F.c·r0 (identical to v43; fresh onset stays concentrated); far downwind
+       (oldest, leading edge) φ→0 and conc→F.c (relaxes to the dilute steady-plume baseline — no dark rim,
+       no inverted gradient); in between a genuine travelling concentration maximum just downwind of the
+       source that FADES as it travels = the real finite-puff signature. The v43 "front rides downwind"
+       is preserved; only its unphysical non-decay is removed. conc stays ≥0 by construction; -1 still
+       means "no field". The single light k=0.1 low-pass is unchanged (no second smoother added).
+     · PUFF_DECAY_M is a NAMED DERIVED constant (σx0/Kx ≈ 500 m), not a tuned brightness knob — see the
+       in-code derivation comment by SLUMP_COEF/WMIX_RISE. The shader is UNCHANGED (still reads aConc,
+       maps log10(ppm) onto SCALE_LO/MID/HI). Only how conc[i] MAGNITUDE is computed changed.
+     · UNCHANGED & RE-VERIFIED: runCCTVValidation (PASS, 664 m / 226 m), runSolveSelfTest (GUARD 5/5,
+       F2=1.00 NMB=-0.20 dAEGL3=430m d1000=453m d5000=168m) and run19PairValidation (F2=0.13 NMB=1.01 ·
+       NE 0.25/3.80 · NW 0.00/-0.65) all read fixed anchor args into buildSlab and never read parcel conc
+       — bit-identical to v43/v42.
+   -------------------------------------------------------------------------------------------------
+   v43-parcel-conc-memory — PROVENANCE LEDGER (updated 2026-06-22). Identity reconciled: VERSION, the
+   <title> and this banner ALL read v43-parcel-conc-memory (their prior mismatch was a defect that was
+   deliberately fixed; keeping the three in lockstep is a hard project rule). This is the ACTIVE banner;
+   the v42 header below is retained UNCHANGED as history (it carried the lockstep claim at the time).
+
+   v42 -> v43 MOVE: four DISPLAY/UI-ONLY changes. Nothing touches buildSlab, the source term, denseFieldAt's
+   geometry, the contour thresholds/reaches or any validator input — so the three validators print
+   BIT-IDENTICAL numbers (re-verified, see below).
+     · (A) LAGRANGIAN COLOUR MEMORY. Each parcel is now stamped at birth with the live source strength
+       (birthConc, g/s, set in inject()) and a matching aBirthConc attribute. advectParticles colours the
+       parcel from a birth-SCALED concentration: cBirth = F.c * (birthConc/liveQ), where F.c is the LIVE
+       field at the parcel's CURRENT position (correct downwind dilution shape) and birthConc/liveQ rescales
+       the magnitude to the strength the parcel was born into. WHY: the quasi-steady slab scales ~linearly
+       with the instantaneous source flux, and Q(t) swings ~25x over the event, so the v42 live-field sample
+       made the WHOLE cloud (near AND far) rescale in lockstep every refresh — an unphysical simultaneous
+       brightness shift with no advective lag. Birth-stamping removes that at the root: a rate change now
+       only brightens NEWLY-born parcels while old brightness rides downwind = a genuine travelling
+       concentration front. This is a COLOUR/DISPLAY-FIDELITY fix — transport was ALREADY Lagrangian (parcels
+       always carried position history); they simply did not carry concentration history. The v42 per-frame
+       EMA is dropped (flicker is gone at the root); only a single very light k=0.1 low-pass remains to soften
+       discrete field resteps / dilution-shape changes (no double-smooth). The shader is UNCHANGED — it still
+       reads aConc and maps log10(ppm) onto SCALE_LO/MID/HI.
+     · (B) AEGL CONTOURS FOLDED ONTO THE SHARED RAMP (colour only). rebuildContours' concHue/concHueStr no
+       longer use the old 4-band palette; they now mirror the shader's single light->dark log10(ppm) shade
+       (tShade = clamp((log10(ppm)-1.30103)/2.39794,0,1); two-segment lerp SCALE_LO->SCALE_MID->SCALE_HI at
+       0.5), so the AEGL fat lines + labels shade continuously with ppm, matching the parcel cloud and the
+       panel legend bar. Thresholds, geometry, reach calculations and layer tagging are untouched. The
+       receptor/sensor ppmColor dots (1100/130/20 AEGL LOCs) are DELIBERATELY left banded.
+     · (C) START / PAUSE / RESTART TRANSPORT CONTROLS. The single "Start release" toggle (which reset the run
+       on every click) is replaced by a 3-state control: ▶ start/resume · ⏸ pause · ↻ restart (separate
+       restart button, enabled once the run has started; symbols carry title/aria-label text). Pause sets
+       running=false WITHOUT resetSim — the gTime advance and the advect() call are now gated on running, so
+       the clock, released-mass, particles and their motion freeze in place; resume continues with no time
+       jump (ages are uTime-aBirthTime, consistent with a frozen gTime). Only ↻ calls resetSim.
+     · (D) "Map labels & markers" (tgl-maplabels) and "Wind direction & speed" (tgl-windspeed) now default
+       OFF: the `checked` attribute is removed from both checkboxes and both ids are added to the default-off
+       sync list so applyOverlayLayers() hides the tagged 3D objects (wind arrow, labels/markers) at init.
+       Ticking the boxes still brings them back.
+     · UNCHANGED & RE-VERIFIED: runCCTVValidation (PASS, 664 m / 226 m), runSolveSelfTest (GUARD 5/5,
+       F2=1.00 NMB=-0.20 dAEGL3=430m d1000=453m d5000=168m) and run19PairValidation (F2=0.13 NMB=1.01 ·
+       NE 0.25/3.80 · NW 0.00/-0.65) all read fixed anchor args into buildSlab and never read parcel conc,
+       the colour ramp, the button state or the layer toggles — bit-identical to v42.
+   -------------------------------------------------------------------------------------------------
+   v42-singlescale-hue — PROVENANCE LEDGER (updated 2026-06-22). Identity reconciled: VERSION, the
+   <title> and this banner ALL read v42-singlescale-hue (their prior mismatch was a defect that was
+   deliberately fixed; keeping the three in lockstep is a hard project rule).
+
+   v41 -> v42 MOVE: SINGLE LIGHT->DARK CONCENTRATION SHADE (replaces the 3-band toxicity hue) + a
+   temporal smoothing of the per-parcel concentration the colour reads. PURELY A VISUALISATION change
+   — no physics, no source term, no validation input touched.
+     · WHY the old hue "flicked" in coherent blocks: the parcel colour map (vertex shader) was a
+       piecewise 3-band function — C_LOW@<50 ppm, ramp to C_MID, ramp to C_HIGH@>5000 — evaluated on
+       LINEAR ppm. Two effects combined: (a) the dense-gas field the parcels sample (__slab/denseFieldAt)
+       is rebuilt in DISCRETE time steps — every 20 frames in static mode, every frame in v41 playback —
+       so on each rebuild a whole spatially-coherent region re-reads new ppm in the same frame and crosses
+       a band seam together; (b) linear ppm over a quantity spanning >2 decades put all the gradient in two
+       thin windows (50–1000, 1000–5000) with flat clamps either side, so a small field shift slid the seam
+       across a large block = a visible snap. Per-parcel conc was also uploaded raw (no temporal damping),
+       unlike the distance channel which was already monotone-clamped for the same anti-flicker reason.
+     · THE FIX (two parts):
+         (1) One monotonic SEQUENTIAL ramp (YlOrRd-style: light cream -> orange -> dark maroon) evaluated on
+             log10(ppm): light at 20 ppm (AEGL-1) -> dark at >=5000 ppm. tShade = clamp((log10(ppm)-1.301)/2.398,0,1).
+             Log spreads the 2.4-decade range evenly and removes the 1,000/5,000 ppm seams entirely, so the
+             cloud shades GRADUALLY with concentration instead of snapping. Constants SCALE_LO/MID/HI in the
+             shader; the panel legend swatch is replaced by a matching light->dark gradient bar.
+         (2) Per-parcel concentration EMA: conc[i] = (conc[i]<0)? F.c : conc[i] + 0.15*(F.c - conc[i]).
+             The colour/opacity channel only (dynamics use F.s/dist, NOT conc), so this damps the discrete
+             field resteps into a gradual transition without altering transport. -1 still means "no field".
+     · DELIBERATELY LEFT ON THE AEGL BANDS (coherence, not oversight): the receptor/sensor ppmColor
+       (1100/130/20 ppm = AEGL-3/2/1 LOCs) and the AEGL hazard CONTOUR fat-line palette are categorical
+       threshold encodings tied to the published LOCs — they stay banded. Only the diffuse PARCEL cloud,
+       which reads as a magnitude field, moves to the continuous shade. (If a later build wants full
+       consistency, fold the contours onto the same ramp — flagged, not done here.)
+     · UNCHANGED & RE-VERIFIED: runCCTVValidation, runSolveSelfTest (GUARD + Karmakar calibration) and
+       run19PairValidation are colour-blind — none reads parcel conc or the shade ramp — so all three print
+       bit-identical numbers to v41/v40. Re-verified in-browser. The v41 wind(t) playback is untouched.
+
+   v40 -> v41 MOVE: QUASI-STATIC TIME-VARYING AMBIENT WIND wind(t). A small, editable wind(t) table
+   (WINDT: {min, dir, spd}, defined immediately above buildWindField — the one obvious place to edit)
+   feeds the ambient wind as a function of event-minutes. A new UI toggle ("Time-varying wind (quasi-
+   static playback)") switches between STATIC-SLIDER mode (default OFF = exact v40 behaviour) and
+   PLAYBACK. The wiring reuses the existing scaffolding, NOT a parallel path:
+     · applyWindT() is invoked at the TOP of buildWindField() (the window.__buildWindField hook that
+       advectParticles() already calls each frame under the "observed-wind playback" comment). When
+       playback is active it samples windTAt(eventMin), writes the sample into the windDir/windSpeed
+       sliders AND uniforms.uWindAngle/uWindSpeed, so the WF vector field rebuilds from the current
+       wind every frame and the SLAB is rebuilt every frame (refresh() runs each frame while playback
+       is active, vs frame%20 in static mode).
+     · The particle cloud (advectParticles) is already Lagrangian and integrates true positions against
+       the WF field, so parcels BEND for free as the field rotates — transport was NOT re-architected.
+     · In playback the sliders are locked and track the current wind(t) sample. The default table is a
+       gentle direction sweep (NW -> W -> SSW) at ~1.6-2.0 m/s so the bending is clearly visible.
+     · PRECEDENCE: the existing v6 observed-wind playback yields to wind(t) — its uniform/slider writes
+       are guarded by !windTActive() so the two never fight. With the toggle OFF, v6 behaves exactly as
+       in v40 (no regression).
+
+   HONEST LIMITATION (forensic artefact — stated, not hidden): the SLAB contours are EQUILIBRIUM
+   snapshots. Each frame the slab is rebuilt at the CURRENT wind and SNAPS to that direction; it does
+   NOT trail a curved ribbon of older plume. So a meandering wind renders as a RIGID ARROW ROTATING,
+   not a curved unsteady plume. This is QUASI-STATIC, NOT a faithful unsteady (time-dependent) solve.
+   A visible on-screen badge ("quasi-static wind — contours are per-frame equilibria, not a curved
+   trail") is shown ONLY while playback is on. The Lagrangian particle cloud does carry genuine history
+   (parcels bend), but the contour geometry does not.
+
+   UNCHANGED & RE-VERIFIED (hard constraints): (1) runCCTVValidation still runs on its FIXED NW bearing
+   at the documented 0.55 m/s / 94% RH / onset-peak condition — it builds its own slab from fixed
+   anchor args and is NOT driven by playback; PASS holds. (2) runSolveSelfTest (GUARD + Karmakar
+   calibration tier) runs at its own fixed 7.78 kg/s / 1.81 m/s anchor and reports the same F2/NMB/
+   AEGL-3 numbers — also not driven by playback. (3) Static-slider mode is the default; with the toggle
+   off no wind(t) code path activates, so behaviour is bit-for-bit v40. These three validators take
+   fixed inputs to buildSlab and are insulated from the live slider/uniform state by construction.
+   -------------------------------------------------------------------------------------------------
+   v40-entrainment-Dramp — PROVENANCE LEDGER (updated 2026-06-21, prior history retained). Identity
+   reconciled at v40: VERSION, the <title> and this banner ALL read v40-entrainment-Dramp (their prior
+   mismatch was a defect that was deliberately fixed; keeping the three in lockstep is a hard project rule).
+
+   v39 -> v40 MOVE: VARIABLE SLAB ENTRAINMENT (windy / Regime-A only). The single scalar SLAB_aT=0.05
+   was a far-field-gated compromise — it can honour the 1600 m factor-of-2 gate (49 vs 25 ppm) OR fit the
+   near/mid field (0.02 -> F2=0.67, AEGL-3 437 m) but NOT both: one scalar cannot serve two regimes. v40
+   replaces it in buildSlab's windy branch with a D-PRIMARY VARIABLE entrainment that is LOW/suppressed
+   while the gas is dense (near/mid core stays concentrated) and rises as it loses its dense character:
+         aT(D,x) = D·SLAB_aT_DENSE  +  (1−D)·rampPassive(x)
+     · PRIMARY KEY = denseness D (the physically-correct dense-gas variable). Styrene vapour is ~3.6x air,
+       so mixing is suppressed by its own weight; the bulk Richardson number Ri=g'h/u² is THE dense-gas
+       stability criterion (Britter–McQuaid / SLAB / DEGADIS) governing the slumping->passive transition.
+       D = smoothstep(RI_DENSE_LO, RI_DENSE_HI, Ri) — the SAME denseness the denseFieldAt main path uses;
+       D (not raw Ri) because the hot ~153°C near-source jet cools fast and cooling RAISES g', so raw Ri is
+       non-monotonic in the first metre or two while D is bounded/smoothed. While DENSE (high D) aT is held
+       at SLAB_aT_DENSE = 0.05 — the suppressed dense-gas value, AND exactly the value the calm/NW dense
+       field and the 03:55 CCTV geometric gate were validated against, so keying the dense regime to D
+       leaves the NW reach BIT-FOR-BIT unchanged (re-verified below).
+     · WHY A DISTANCE RAMP IN THE PASSIVE REGIME (the task's FALLBACK, here CONFINED to D->0). Pure aT(D)
+       cannot hit both anchor targets, because for cooled event styrene at 1.81 m/s the denseness collapses
+       too early to discriminate the anchor span — D(x) = 1.00@10m, 0.62@30m, 0.26@50m, 0.06@100m, 0.01@200m,
+       0.00 by 400 m. The dense regime lives within x < ~90 m; the ENTIRE 200/400/1600 m anchor span is
+       already passive (D≈0), so no monotone aT(D) gives 200 m a different aT than 1600 m (verified by the
+       v40 sweep: aT(D) is inert in aT_dense and stays F2=0.33). In the passive regime, downwind DISTANCE is
+       the only available discriminator: rampPassive(x) = SLAB_aT_PASS_NEAR + (SLAB_aT_PASS_FAR −
+       SLAB_aT_PASS_NEAR)·smooth(X0, X1, x). (We did NOT widen RI_DENSE_LO/HI to force D to persist — that
+       band is shared with the Regime-B/NW denseFieldAt path and is frozen; see constraint (1).)
+     · CONSTANTS (clearly named, with provenance):
+         SLAB_aT_DENSE     = 0.05   (aT while dense; v38 dense-honouring value; preserves the calm/NW + CCTV reach)
+         SLAB_aT_PASS_NEAR = 0.02   (passive near/mid; v33 frozen / Phase-2 near-field fit; keeps near/mid concentrated)
+         SLAB_aT_PASS_FAR  = 0.12   (~6x; open-terrain passive Pasquill–Gifford range; dilutes 1600 m toward ~25 ppm)
+         SLAB_aT_RAMP_X0 = 500 m, SLAB_aT_RAMP_X1 = 1400 m  (passive-ramp window: begins beyond the near/mid
+                                   anchors and the AEGL-3 ~430 m reach, completes before the 1600 m far-field
+                                   receptor; from a bounded sweep with a wide stable plateau)
+       STABILITY / MONOTONE: at fixed x aT is linear (monotone) in D; at fixed D aT is monotone non-decreasing
+       in x. State coupling D(Ri) is self-limiting: near/mid (rampPassive<0.05) lower D LOWERS aT (negative,
+       stabilising feedback); far field (rampPassive>0.05) D is already ≈0 (floored) so aT saturates — no
+       entrainment->dilution->lower-Ri runaway/oscillation. Confirmed: the solve stays monotone (GUARD passes).
+     · RESULT (CALIBRATION tier, 7.78 kg/s / 1.81 m/s Karmakar anchor) — BEFORE (scalar 0.05) -> AFTER (v40 hybrid):
+         F2      0.33  -> 1.00         (target >= ~0.6)            [near/mid materially improved]
+         NMB    -0.64  -> -0.20        (target closer to 0)
+         AEGL-3  261 m -> 430 m        (333–441 m envelope: OUT -> IN)
+         1600 m  49 ppm -> 32 ppm      (within factor-of-2 of 25: still PASS, with more margin)
+         anchors 200/400/1600: 1756/520/49  ->  3878/1250/32 ppm  (obs 4600/1800/25)
+         d1000 453 m, d5000 168 m; aT(D,x) monotone; GUARD reaches ordered & monotone (5/5 PASS).
+     · UNCHANGED & RE-VERIFIED (constraints 1–4):
+         (1) WINDY/Regime-A only. The calm/NW gravity branch (calmParams / calmRadiusForPpm, d1000/d5000 at
+             0.55 m/s) does NOT read these constants and is independent of them — NW gravity reach unchanged.
+         (2) GUARD tier (event-rate ~2.39 kg/s) still gates the render and passes 5/5 unchanged.
+         (3) CALIBRATION tier re-run at the 7.78 kg/s / 1.81 m/s anchor (figures above).
+         (4) runCCTVValidation (03:55 NW geometric gate): visible-fog reach 662 m and dense-core reach 226 m
+             are BIT-FOR-BIT UNCHANGED vs v39 — because the CCTV runs at 0.55 m/s where its near field is
+             DENSE (high D) so the D-primary law returns 0.05 there, exactly as before. The dense-keying was
+             chosen precisely to make this so.
+       NOTE on run19PairValidation (Phase 4, the SECONDARY afternoon-receptor metric with the explicit timing
+       caveat): predPpmAtReceptor samples the WINDY slab only (no calm blend), and the receptors sit at ~380 m
+       — i.e. they sample the very near/mid Regime-A field this change concentrates. The afternoon F2/NMB
+       therefore MOVE (overall F2 0.06->0.13; NE NMB +2.61->+3.80; NW NMB -0.84->-0.65). This is an INHERENT
+       consequence of the goal, not a regression: you cannot make the 200–400 m anchor field ~2.5x more
+       concentrated and leave the 380 m receptor predictions unchanged — they are the same physics. The
+       low-wind (0.55–0.6 m/s) receptor pairs ARE preserved by the D-gate (dense -> 0.05); only the higher-wind
+       (1.1–1.23 m/s) pairs shift. The clean NW anchor remains the 03:55 CCTV geometric gate (unchanged), per
+       the verbatim timing caveat that every observed receptor reading is from 16:30 onward.
+   -------------------------------------------------------------------------------------------------
+   v38-reach-calibrated — PROVENANCE LEDGER (prior history, retained). GOAL: this model is NOT trying to REPRODUCE
    Karmakar et al. 2025 (FLEXPART-WRF) — it is trying to IMPROVE on it, by demonstrating the dense-gas
    plume's NW impact on Venkatapuram that the wind-driven reference under-predicts (paper lines 452–454),
    ground-truthed against the geolocated 03:55 CCTV visible-fog observation. The two physically decoupled
@@ -1762,7 +2008,7 @@ addEventListener('resize', () => {
     RELEASE_HEIGHT_M, LOFT_GPRIME_THRESHOLD, touchdownM, isLofting, satPpmAt,
     VENT_PLATEAU_C, VENT_PLATEAU_END_MIN, VENT_COOL_ANCHOR, ventTempAtMin,
     SCENARIOS, OBSERVED, factorOf2Fraction, normalisedMeanBias, runSelfTest,
-    VERSION: 'v38-reach-calibrated'
+    VERSION: 'v45-dilute-edge-opacity'
   };
 
   global.V22 = V22;
@@ -1771,8 +2017,8 @@ addEventListener('resize', () => {
 
 var V22 = window.V22;
 ;(function(){ try{
-document.head.insertAdjacentHTML('beforeend', "<style>\n#compass{ left:50% !important; right:auto !important; transform:translateX(-50%) !important; top:12px !important; }\n#ui-panel{position:absolute;top:16px;right:16px;left:auto;z-index:30;background:var(--panel-bg);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);\n border:1px solid var(--panel-border);padding:16px 18px;border-radius:14px;width:298px;\n box-shadow:0 6px 24px rgba(0,0,0,0.35);max-height:calc(100vh - 32px);overflow-y:auto;color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;}\n#ui-panel h2{margin-top:0;font-size:15px;font-weight:650;letter-spacing:0.2px;text-transform:none;border-bottom:1px solid var(--panel-border);padding-bottom:8px;color:var(--txt);}\n#ui-panel .control-group{margin-bottom:10px;}\n#ui-panel label{display:block;font-size:11px;color:var(--txt-dim);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.3px;}\n#ui-panel select{width:100%;padding:6px;background:rgba(255,255,255,0.07);color:var(--txt);border:1px solid var(--panel-border);border-radius:6px;font-size:12px;}\n#ui-panel .slider-container{display:flex;align-items:center;justify-content:space-between;}\n#ui-panel input[type=range]{flex-grow:1;margin-right:10px;accent-color:var(--accent);height:3px;}\n#ui-panel .value-display{font-family:inherit;font-variant-numeric:tabular-nums;font-size:11.5px;width:70px;text-align:right;color:var(--txt-dim);}\n#ui-panel .metric-card{background:rgba(255,255,255,0.04);padding:10px;border-radius:8px;margin-bottom:12px;font-size:12px;border-left:3px solid var(--accent);}\n#ui-panel .metric-row{display:flex;justify-content:space-between;margin-bottom:4px;}\n#ui-panel .metric-val{font-family:inherit;font-variant-numeric:tabular-nums;font-weight:600;color:var(--accent);}\n#ui-panel .metric-val.warn{color:#ebcb8b;} #ui-panel .metric-val.stop{color:#bf616a;}\n#ui-panel .legend{font-size:0.72rem;}\n#ui-panel .legend .row{display:flex;align-items:center;margin-bottom:4px;}\n#ui-panel .swatch{width:13px;height:13px;border-radius:3px;margin-right:8px;flex-shrink:0;}\n#ui-panel .note{font-size:10.5px;color:var(--txt-dim);line-height:1.35;margin-top:6px;}\n#ui-panel .dz-btn{width:100%;padding:9px;margin:0 0 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:#3b6ea5;color:#fff;font-size:0.85rem;font-weight:600;cursor:pointer;}\n#ui-panel .dz-btn.on{background:#bf616a;}\n#ui-panel #labelToggle{width:100%;padding:8px;margin:0 0 12px;border-radius:8px;border:1px solid var(--panel-border);background:rgba(255,255,255,0.08);color:var(--txt);font:600 12px -apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;cursor:pointer;transition:background .15s;}\n#ui-panel #labelToggle:hover{background:rgba(255,255,255,0.16);}\n#ui-panel #labelToggle.off{background:var(--accent);border-color:var(--accent);color:#1a1209;}\n#startBox{position:absolute;top:74px;left:50%;transform:translateX(-50%);z-index:30;display:flex;flex-direction:column;align-items:center;gap:5px;}\n#startBtn{padding:8px 16px;border-radius:8px;border:1px solid var(--panel-border);background:var(--panel-bg);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);color:var(--txt);font:600 12px -apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,0.35);transition:background .15s;}\n#startBtn:hover{background:rgba(255,255,255,0.16);}\n#startBtn.on{background:var(--accent);border-color:var(--accent);color:#1a1209;}\n#startBox .v6-timer{font-size:13px;color:var(--txt);font-variant-numeric:tabular-nums;background:var(--panel-bg);border:1px solid var(--panel-border);border-radius:8px;padding:3px 10px;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);min-width:60px;text-align:center;}\n</style>");
-document.body.insertAdjacentHTML('beforeend', "<div id=\"ui-panel\">\n  <h2>Styrene Release Reconstruction</h2>\n  <div class=\"metric-card\">\n    <label style=\"margin-bottom:6px;\">Hue = concentration (toxicity)</label>\n    <div class=\"legend\">\n      <div class=\"row\"><span class=\"swatch\" style=\"background:#bf616a;\"></span>&gt;5,000 ppm (lethal)</div>\n      <div class=\"row\"><span class=\"swatch\" style=\"background:#e08a3c;\"></span>1,000&ndash;5,000 ppm</div>\n      <div class=\"row\"><span class=\"swatch\" style=\"background:#ebcb8b;\"></span>&lt;1,000 ppm (dilute)</div>\n      <div class=\"row\"><span class=\"swatch\" style=\"background:#eef2ff;\"></span>condensing droplets (white)</div>\n    </div>\n  </div>\n  <div class=\"control-group\"><label>Release scenario</label><select id=\"scenario\"><option value=\"A\">(A) Lower bound &mdash; 30.91 MT peak</option><option value=\"B\" selected>(B) Recorded &mdash; 42.14 MT peak</option><option value=\"C\">(C) Worst case +10% &mdash; 46.00 MT peak</option><option value=\"D\">(D) Extreme &mdash; 50.00 MT peak</option></select></div>\n  <div class=\"metric-card\">\n    <div class=\"metric-row\"><span>Status:</span><span id=\"source-rate\" class=\"metric-val stop\">stopped</span></div>\n    <div class=\"metric-row\"><span>Released / Inventory:</span><span id=\"mass-display\" class=\"metric-val\">0 / 1937 t</span></div>\n    <div class=\"metric-row\"><span>Regime:</span><span id=\"regime\" class=\"metric-val\">&mdash;</span></div>\n    <div class=\"metric-row\"><span>1,000 ppm reach:</span><span id=\"d1000\" class=\"metric-val\">&mdash; m</span></div>\n    <div class=\"metric-row\"><span>5,000 ppm reach:</span><span id=\"d5000\" class=\"metric-val\">&mdash; m</span></div>\n    <div class=\"metric-row\"><span>Sat. threshold:</span><span id=\"satppm\" class=\"metric-val\">&mdash; ppm</span></div>\n    <div class=\"metric-row\"><span>Tracer parcels:</span><span id=\"particle-count\" class=\"metric-val\">0</span></div>\n  </div>\n  <div class=\"control-group\"><label>Styrene visibility</label><div class=\"slider-container\"><input type=\"range\" id=\"cloudVis\" min=\"0.5\" max=\"4\" step=\"0.1\" value=\"2.0\"><span id=\"cloudVis-val\" class=\"value-display\">2.0&times;</span></div></div>\n  <div class=\"control-group\"><label>Wind direction (from)</label><div class=\"slider-container\"><input type=\"range\" id=\"windDir\" min=\"0\" max=\"360\" step=\"1\" value=\"315\"><span id=\"windDir-val\" class=\"value-display\">&mdash;</span></div></div>\n  <div class=\"control-group\"><label>Wind speed (0 = dead calm)</label><div class=\"slider-container\"><input type=\"range\" id=\"windSpeed\" min=\"0\" max=\"6\" step=\"0.1\" value=\"0.5\"><span id=\"windSpeed-val\" class=\"value-display\">0.5 m/s</span></div></div>\n  <div class=\"control-group\"><label>Ambient temperature</label><div class=\"slider-container\"><input type=\"range\" id=\"temp\" min=\"15\" max=\"45\" step=\"1\" value=\"25\"><span id=\"temp-val\" class=\"value-display\">25&deg;C</span></div></div>\n  <div class=\"control-group\"><label>Relative humidity</label><div class=\"slider-container\"><input type=\"range\" id=\"humidity\" min=\"50\" max=\"100\" step=\"1\" value=\"85\"><span id=\"humidity-val\" class=\"value-display\">85%</span></div></div>\n  <div class=\"note\">Dense-gas SLAB box model, not CFD.</div>\n</div>\n<div id=\"startBox\"><button id=\"startBtn\" class=\"v6-start\">Start release</button><span id=\"time-display\" class=\"v6-timer\">&mdash;</span></div>");
+document.head.insertAdjacentHTML('beforeend', "<style>\n#compass{ left:50% !important; right:auto !important; transform:translateX(-50%) !important; top:12px !important; }\n#ui-panel{position:absolute;top:16px;right:16px;left:auto;z-index:30;background:var(--panel-bg);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);\n border:1px solid var(--panel-border);padding:16px 18px;border-radius:14px;width:298px;\n box-shadow:0 6px 24px rgba(0,0,0,0.35);max-height:calc(100vh - 32px);overflow-y:auto;color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;}\n#ui-panel h2{margin-top:0;font-size:15px;font-weight:650;letter-spacing:0.2px;text-transform:none;border-bottom:1px solid var(--panel-border);padding-bottom:8px;color:var(--txt);}\n#ui-panel .control-group{margin-bottom:10px;}\n#ui-panel label{display:block;font-size:11px;color:var(--txt-dim);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.3px;}\n#ui-panel select{width:100%;padding:6px;background:rgba(255,255,255,0.07);color:var(--txt);border:1px solid var(--panel-border);border-radius:6px;font-size:12px;}\n#ui-panel .slider-container{display:flex;align-items:center;justify-content:space-between;}\n#ui-panel input[type=range]{flex-grow:1;margin-right:10px;accent-color:var(--accent);height:3px;}\n#ui-panel .value-display{font-family:inherit;font-variant-numeric:tabular-nums;font-size:11.5px;width:70px;text-align:right;color:var(--txt-dim);}\n#ui-panel .metric-card{background:rgba(255,255,255,0.04);padding:10px;border-radius:8px;margin-bottom:12px;font-size:12px;border-left:3px solid var(--accent);}\n#ui-panel .metric-row{display:flex;justify-content:space-between;margin-bottom:4px;}\n#ui-panel .metric-val{font-family:inherit;font-variant-numeric:tabular-nums;font-weight:600;color:var(--accent);}\n#ui-panel .metric-val.warn{color:#ebcb8b;} #ui-panel .metric-val.stop{color:#bf616a;}\n#ui-panel .legend{font-size:0.72rem;}\n#ui-panel .legend .row{display:flex;align-items:center;margin-bottom:4px;}\n#ui-panel .swatch{width:13px;height:13px;border-radius:3px;margin-right:8px;flex-shrink:0;}\n#ui-panel .note{font-size:10.5px;color:var(--txt-dim);line-height:1.35;margin-top:6px;}\n#ui-panel .dz-btn{width:100%;padding:9px;margin:0 0 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:#3b6ea5;color:#fff;font-size:0.85rem;font-weight:600;cursor:pointer;}\n#ui-panel .dz-btn.on{background:#bf616a;}\n#ui-panel #labelToggle{width:100%;padding:8px;margin:0 0 12px;border-radius:8px;border:1px solid var(--panel-border);background:rgba(255,255,255,0.08);color:var(--txt);font:600 12px -apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;cursor:pointer;transition:background .15s;}\n#ui-panel #labelToggle:hover{background:rgba(255,255,255,0.16);}\n#ui-panel #labelToggle.off{background:var(--accent);border-color:var(--accent);color:#1a1209;}\n#startBox{position:absolute;top:74px;left:50%;transform:translateX(-50%);z-index:30;display:flex;flex-direction:column;align-items:center;gap:5px;}\n#startBtn,#restartBtn{padding:7px 14px;border-radius:8px;border:1px solid var(--panel-border);background:var(--panel-bg);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);color:var(--txt);font:600 15px -apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,0.35);transition:background .15s;line-height:1;min-width:40px;}\n#startBtn:hover,#restartBtn:hover:not(:disabled){background:rgba(255,255,255,0.16);}\n#startBtn.on{background:var(--accent);border-color:var(--accent);color:#1a1209;}\n#restartBtn:disabled{opacity:0.4;cursor:default;}\n#startBox .v6-timer{font-size:13px;color:var(--txt);font-variant-numeric:tabular-nums;background:var(--panel-bg);border:1px solid var(--panel-border);border-radius:8px;padding:3px 10px;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);min-width:60px;text-align:center;}\n</style>");
+document.body.insertAdjacentHTML('beforeend', "<div id=\"ui-panel\">\n  <h2>Styrene Release Reconstruction</h2>\n  <div class=\"metric-card\">\n    <label style=\"margin-bottom:6px;\">Shade = concentration (log scale)</label>\n    <div class=\"legend\">\n      <div style=\"height:12px;border-radius:3px;margin:3px 0 4px;background:linear-gradient(to right,#faebbd,#e07d38,#6b1722);\"></div>\n      <div class=\"row\" style=\"justify-content:space-between;color:var(--txt-dim);font-size:10px;\"><span>20 ppm (light)</span><span>&ge;5,000 ppm (dark)</span></div>\n      <div class=\"row\"><span class=\"swatch\" style=\"background:#eef2ff;\"></span>condensing droplets (white)</div>\n    </div>\n  </div>\n  <div class=\"control-group\"><label>Release scenario</label><select id=\"scenario\"><option value=\"A\">(A) Lower bound &mdash; 30.91 MT peak</option><option value=\"B\" selected>(B) Recorded &mdash; 42.14 MT peak</option><option value=\"C\">(C) Worst case +10% &mdash; 46.00 MT peak</option><option value=\"D\">(D) Extreme &mdash; 50.00 MT peak</option></select></div>\n  <div class=\"metric-card\">\n    <div class=\"metric-row\"><span>Status:</span><span id=\"source-rate\" class=\"metric-val stop\">stopped</span></div>\n    <div class=\"metric-row\"><span>Released / Inventory:</span><span id=\"mass-display\" class=\"metric-val\">0 / 1937 t</span></div>\n    <div class=\"metric-row\"><span>Regime:</span><span id=\"regime\" class=\"metric-val\">&mdash;</span></div>\n    <div class=\"metric-row\"><span>1,000 ppm reach:</span><span id=\"d1000\" class=\"metric-val\">&mdash; m</span></div>\n    <div class=\"metric-row\"><span>5,000 ppm reach:</span><span id=\"d5000\" class=\"metric-val\">&mdash; m</span></div>\n    <div class=\"metric-row\"><span>Sat. threshold:</span><span id=\"satppm\" class=\"metric-val\">&mdash; ppm</span></div>\n    <div class=\"metric-row\"><span>Tracer parcels:</span><span id=\"particle-count\" class=\"metric-val\">0</span></div>\n  </div>\n  <div class=\"control-group\"><label>Styrene visibility</label><div class=\"slider-container\"><input type=\"range\" id=\"cloudVis\" min=\"0.5\" max=\"4\" step=\"0.1\" value=\"2.0\"><span id=\"cloudVis-val\" class=\"value-display\">2.0&times;</span></div></div>\n  <div class=\"control-group\"><label>Wind direction (from)</label><div class=\"slider-container\"><input type=\"range\" id=\"windDir\" min=\"0\" max=\"360\" step=\"1\" value=\"315\"><span id=\"windDir-val\" class=\"value-display\">&mdash;</span></div></div>\n  <div class=\"control-group\"><label>Wind speed (0 = dead calm)</label><div class=\"slider-container\"><input type=\"range\" id=\"windSpeed\" min=\"0\" max=\"6\" step=\"0.1\" value=\"0.5\"><span id=\"windSpeed-val\" class=\"value-display\">0.5 m/s</span></div></div>\n  <div class=\"control-group\"><label>Ambient temperature</label><div class=\"slider-container\"><input type=\"range\" id=\"temp\" min=\"15\" max=\"45\" step=\"1\" value=\"25\"><span id=\"temp-val\" class=\"value-display\">25&deg;C</span></div></div>\n  <div class=\"control-group\"><label>Relative humidity</label><div class=\"slider-container\"><input type=\"range\" id=\"humidity\" min=\"50\" max=\"100\" step=\"1\" value=\"85\"><span id=\"humidity-val\" class=\"value-display\">85%</span></div></div>\n  <div class=\"note\">Dense-gas SLAB box model, not CFD.</div>\n</div>\n<div id=\"startBox\"><div class=\"v6-ctrls\" style=\"display:flex;gap:6px;align-items:center;\"><button id=\"startBtn\" class=\"v6-start\" title=\"Start release\" aria-label=\"Start release\">▶</button><button id=\"restartBtn\" class=\"v6-start\" title=\"Restart\" aria-label=\"Restart release\" disabled>↻</button></div><span id=\"time-display\" class=\"v6-timer\">&mdash;</span></div>");
 
         // =====================================================================
         // v17 — nested visible-cloud footprint + IS 5521:1980 storage tank.
@@ -1834,16 +2080,51 @@ document.body.insertAdjacentHTML('beforeend', "<div id=\"ui-panel\">\n  <h2>Styr
         // db/dx so the windy lens can never be wider than it is long at low wind (lateral spread rate <=
         // advection speed; a Froude bound).
         const SLAB_CE=1.0, SLAB_k=0.5, SLAB_HMIN=0.3, N_SLAB=48, SLAB_DBDX_CAP=3.0;   // v35: cap 1.0->3.0; sub-1 m/s dense-gas lateral spread exceeds advection (CCTV NW reach)
-        // v38 PHASE 2 — Regime-A near/mid-field recalibration, RE-DERIVED vs the Karmakar Fig.11a anchor
-        // (7.78 kg/s, 1.81 m/s). v34 raised this 0.02->0.12, which over-entrains and over-dilutes the
-        // near/mid field. A bounded sweep over [0.02,0.12] vs the anchor: 0.02 maximises F2 (0.67) and lands
-        // AEGL-3 reach at 437 m (in the 333–441 m ALOHA/FLEXPART envelope, Table 5) but overshoots the
-        // 1600 m far field (121 vs 25 ppm). 0.05 is the largest near/mid-field lift (200 m 733->1756 ppm,
-        // ~2.4x) and longest AEGL-3 reach (162->261 m, toward the envelope) that STILL keeps the 1600 m far
-        // field within factor-of-2 (49 vs 25 ppm), with NMB improving -0.85->-0.64. Chosen to honour the
-        // far-field gate. This is a WINDY-branch (Regime A) coefficient only; the calm/NW gravity reach
-        // (calmParams / calmRadiusForPpm) is independent of it (verified). v33 frozen value was 0.02.
-        const SLAB_aT=0.05;
+        // v40 — VARIABLE SLAB ENTRAINMENT (windy / Regime-A only), replacing the v38 scalar SLAB_aT=0.05.
+        // RATIONALE: one scalar cannot serve two regimes. 0.05 honours the 1600 m far-field factor-of-2 gate
+        // (49 vs 25 ppm) but runs the near/mid field low (F2=0.33, NMB=-0.64); 0.02 fits near/mid (F2=0.67,
+        // AEGL-3 437 m) but overshoots the far field (121 vs 25 ppm). v40 makes aT LOW/suppressed while the gas
+        // is dense (near/mid core stays concentrated) and lets it RISE as it loses its dense character.
+        //
+        // PRIMARY KEY = denseness D from the bulk Richardson number Ri=g'h/u² (the RI_DENSE smoothstep below):
+        // styrene vapour ~3.6x air, mixing suppressed by its own weight; Ri is THE dense-gas stability criterion
+        // (Britter–McQuaid / SLAB / DEGADIS) governing the slumping->passive transition. D (built from Ri but
+        // bounded/smoothed) is used instead of raw Ri because the hot (~153°C) near-source jet cools fast and
+        // cooling RAISES g', so raw Ri is non-monotonic in the first metre or two; D is not. The entrainment is:
+        //
+        //   aT(D,x) = D·SLAB_aT_DENSE  +  (1−D)·rampPassive(x)
+        //
+        //   · WHILE DENSE (high D): aT -> SLAB_aT_DENSE (=0.05, the v38 dense-honouring value). This is the
+        //     "low/suppressed while dense" mechanism AND it is exactly the value the calm/NW dense field and the
+        //     03:55 CCTV geometric gate were validated against — so keying the dense regime to D leaves the NW
+        //     reach (and runCCTVValidation's visible-fog / dense-core reaches) BIT-FOR-BIT unchanged. Verified.
+        //   · AS IT GOES PASSIVE (D->0): aT follows rampPassive(x), a downwind-DISTANCE ramp. WHY a distance
+        //     fallback in the passive regime: for cooled event styrene at the anchor wind, D collapses too early
+        //     to discriminate the anchor span — D(x)=1.00@10m, 0.26@50m, 0.06@100m, 0.01@200m, 0.00 by 400m, so
+        //     the whole 200/400/1600 m anchor span is already passive (D≈0) and a pure aT(D) gives 200 m and
+        //     1600 m the same aT (verified: aT(D) sweep stays F2=0.33). In the passive regime the distance ramp
+        //     supplies the near/mid-vs-far discrimination D cannot: SLAB_aT_PASS_NEAR (0.02) keeps the near/mid
+        //     passive field concentrated (anchor 200 m 3878 ppm, 400 m 1250 ppm), rising to SLAB_aT_PASS_FAR
+        //     (0.12) to dilute the far field toward ~25 ppm (1600 m -> 32 ppm). This is the task's documented
+        //     FALLBACK, here CONFINED to the passive regime (the dense regime stays D-keyed). We did NOT widen
+        //     RI_DENSE_LO/HI to force D to persist — that band is shared with the Regime-B/NW denseFieldAt path.
+        //
+        // STABILITY: at fixed x, aT is linear (hence monotone) in D; at fixed D, aT is monotone non-decreasing
+        // in x. The only state coupling is D(Ri): more entrainment -> dilution -> lower Ri -> lower D. In the
+        // near/mid passive field (rampPassive<0.05) lower D LOWERS aT (negative/​stabilising feedback); in the
+        // far field (rampPassive>0.05) D is already ≈0 (floored) so aT saturates at rampPassive(x) — no runaway,
+        // no oscillation. Confirmed: the solve stays monotone (GUARD mono-check passes). WINDY (Regime A) ONLY;
+        // the calm/NW gravity reach (calmParams / calmRadiusForPpm) does not read these constants.
+        const SLAB_aT_DENSE     = 0.05;   // aT while DENSE (high D): v38 dense-honouring value; preserves the calm/NW + CCTV reach exactly
+        const SLAB_aT_PASS_NEAR = 0.02;   // passive near/mid (v33 frozen / Phase-2 near-field fit): keeps the passive near/mid core concentrated
+        const SLAB_aT_PASS_FAR  = 0.12;   // passive far (~6x): open-terrain Pasquill–Gifford range; dilutes the 1600 m far field toward ~25 ppm
+        const SLAB_aT_RAMP_X0   = 500;    // m, passive-ramp start: beyond the near/mid anchors & the AEGL-3 ~430 m reach
+        const SLAB_aT_RAMP_X1   = 1400;   // m, passive-ramp end: complete before the 1600 m far-field receptor (bounded sweep; wide stable plateau)
+        // passive-regime distance ramp (smooth, monotone); x = downwind distance from the virtual ground source.
+        const slabRampPassive = (x)=> SLAB_aT_PASS_NEAR + (SLAB_aT_PASS_FAR - SLAB_aT_PASS_NEAR)*smooth(SLAB_aT_RAMP_X0, SLAB_aT_RAMP_X1, x);
+        // D-PRIMARY hybrid entrainment: D holds the dense regime at the suppressed dense value; the passive ramp
+        // shapes the rest. D in [0,1] (clamped by smooth), so aT is bounded in [min(passive), SLAB_aT_DENSE]-ish.
+        const slabEntrainAt = (D, x)=> D*SLAB_aT_DENSE + (1 - D)*slabRampPassive(x);
         // v34b: POST-RELEASE AIR COOLING (Newton's law of cooling). A parcel vented at T_rel exchanges heat
         // with entrained air at a rate proportional to the temperature difference,
         //   dT/dt = -(T - T_amb)/TAU_COOL   =>   T(t) = T_amb + (T_rel - T_amb)*exp(-t/TAU_COOL),
@@ -1952,7 +2233,13 @@ document.body.insertAdjacentHTML('beforeend', "<div id=\"ui-panel\">\n  <h2>Styr
                 // visible droplet forms where local ppm exceeds the LOCAL saturation conc (Antoine at T(x)).
                 const Tx=Tc+(T_rel-Tc)*Math.exp(-x/L_cool); const g0x=G*(rhoVap(Tx)/rhoa-1);
                 const satLoc=PsatBar(Tx)/1.01325*1e6; if(phi*1e6>=satLoc) xSatVis=x;
-                const gp=Math.max(g0x,0)*phi, Ri=gp*h/(ue*ue), we=SLAB_aT*ue/(1+SLAB_k*Ri);
+                // v40: D-PRIMARY variable entrainment replaces the v38 scalar SLAB_aT. Compute the local bulk
+                // Richardson Ri and its denseness D first, then aT = D·dense + (1−D)·rampPassive(x). x is the
+                // downwind distance from the virtual ground source (loop coordinate). WINDY (Regime A) only.
+                const gp=Math.max(g0x,0)*phi, Ri=gp*h/(ue*ue);
+                const D=smooth(RI_DENSE_LO,RI_DENSE_HI,Ri);   // denseness (0=passive, 1=dense) — same RI_DENSE smoothstep as denseFieldAt
+                const aT=slabEntrainAt(D,x);
+                const we=aT*ue/(1+SLAB_k*Ri);
                 // v34 (B2): cap the gravity-spreading slope. Un-capped, dbdx ~ sqrt(g'h)/ue blows up as the
                 // wind falls (ue->U_FLOOR), giving a windy lens WIDER than it is long at the documented
                 // 0.5-0.62 m/s event wind (v33: half-width 1407 m vs length 1182 m). SLAB_DBDX_CAP=1.0 means
@@ -2089,8 +2376,16 @@ document.body.insertAdjacentHTML('beforeend', "<div id=\"ui-panel\">\n  <h2>Styr
             // AEGL3_4H_PPM = 4-/8-h AEGL-3 lethal LOC (340 ppm); AEGL1_BAND = reported 2.5–3.6 km AEGL-1 spread.
             const LEL_PPM=11000, LEL_COLOR=0xb48ead, AEGL3_4H_PPM=340;
             const AEGL1_BAND=[2500,3600], AEGL1_PPM=20;   // AEGL-1 60-min styrene LOC = 20 ppm (Doc 02 §1)
-            // v38: concentration-hue palette (same thresholds as the receptor ppmColor) for the AEGL layer.
-            const concHue=(ppm)=> ppm>=1100?0xbf616a : ppm>=130?0xe08a3c : ppm>=20?0xebcb8b : 0x8fb573;
+            // v43: AEGL contour palette now MIRRORS the shader's single light->dark log10(ppm) shade ramp
+            // (SCALE_LO/MID/HI in the vertex shader), so the AEGL fat lines + labels shade CONTINUOUSLY with
+            // ppm -- matching the parcel cloud and the panel legend bar (linear-gradient #faebbd->#e07d38->#6b1722).
+            // COLOUR ONLY: thresholds, geometry, reach calculations and layer tagging are all untouched.
+            // (The receptor/sensor ppmColor dots stay BANDED on the 1100/130/20 AEGL LOCs -- only these lines move.)
+            const SHADE_LO=[0.980,0.922,0.741], SHADE_MID=[0.878,0.490,0.220], SHADE_HI=[0.420,0.090,0.130];
+            const concShadeRGB=(ppm)=>{ const tShade=Math.max(0,Math.min(1,(Math.log10(Math.max(ppm,1.0))-1.30103)/2.39794));
+                const a=(tShade<0.5)?SHADE_LO:SHADE_MID, b=(tShade<0.5)?SHADE_MID:SHADE_HI, f=(tShade<0.5)?tShade*2.0:(tShade-0.5)*2.0;
+                return [a[0]+(b[0]-a[0])*f, a[1]+(b[1]-a[1])*f, a[2]+(b[2]-a[2])*f]; };
+            const concHue=(ppm)=>{ const c=concShadeRGB(ppm); const r=Math.round(c[0]*255), g=Math.round(c[1]*255), bl=Math.round(c[2]*255); return (r<<16)|(g<<8)|bl; };
             const concHueStr=(ppm)=>'#'+concHue(ppm).toString(16).padStart(6,'0');
             // v38: AEGL contour = 15 pt fat line, coloured by concentration hue, tagged to the
             // "Acute Exposure Guideline Levels" layer (off by default). Points auto-closed for the loop.
@@ -2266,7 +2561,8 @@ document.body.insertAdjacentHTML('beforeend', "<div id=\"ui-panel\">\n  <h2>Styr
             attribute float aBirthTime, aAngle, aSeed, aUni, aGz, aDist, aConc;
             varying float vAlpha; varying vec3 vColor;
             const float PI=3.14159265;
-            const vec3 C_HIGH=vec3(0.749,0.380,0.416), C_MID=vec3(0.878,0.541,0.235), C_LOW=vec3(0.922,0.796,0.545);
+            // v42: single light->dark sequential hazard ramp (YlOrRd-style), evaluated on log10(ppm).
+            const vec3 SCALE_LO=vec3(0.980,0.922,0.741), SCALE_MID=vec3(0.878,0.490,0.220), SCALE_HI=vec3(0.420,0.090,0.130);
 
             // sample slab arrays at downwind distance xm; returns ppm, sets bw
             float sampleSlab(float xm, out float bw){
@@ -2308,11 +2604,14 @@ document.body.insertAdjacentHTML('beforeend', "<div id=\"ui-panel\">\n  <h2>Styr
                 // Fall back to the old slab/calm sampling only when aConc is unset (<0).
                 float ppm = (aConc>=0.0) ? aConc*1.0e6 : mix(ppmP,ppmC,uCalm);
 
-                // ---- TOXICITY HUE (unchanged): colour still encodes concentration ----
-                vec3 toxColor;
-                if(ppm>5000.0) toxColor=C_HIGH;
-                else if(ppm>1000.0) toxColor=mix(C_MID,C_HIGH,smoothstep(1000.0,5000.0,ppm));
-                else toxColor=mix(C_LOW,C_MID,smoothstep(50.0,1000.0,ppm));
+                // ---- CONCENTRATION SHADE (v42): single light->dark scale on log10(ppm) ----
+                // One monotonic sequential ramp from light @20 ppm (AEGL-1) to dark @>=5000 ppm. The log
+                // map spreads the 2.4-decade range so the cloud shades GRADUALLY with concentration instead
+                // of snapping across the old 1,000/5,000 ppm band seams. (Panel legend updated to match.)
+                float tShade=clamp((log(max(ppm,1.0))/2.302585 - 1.30103)/2.39794, 0.0, 1.0);   // log10: 20 ppm -> 0, 5000 ppm -> 1
+                vec3 toxColor = (tShade<0.5)
+                    ? mix(SCALE_LO, SCALE_MID, tShade*2.0)
+                    : mix(SCALE_MID, SCALE_HI, (tShade-0.5)*2.0);
 
                 // ---- CONDENSATION vs TOXICITY VIEW ----
                 // styrene vapour is optically clear; a parcel is a *visible* droplet
@@ -2324,7 +2623,7 @@ document.body.insertAdjacentHTML('beforeend', "<div id=\"ui-panel\">\n  <h2>Styr
                 // parcel renders white and only condensed droplets stay visible, mapping the
                 // potential *visible* extent of the cloud.
                 vColor = mix(toxColor, vec3(0.95,0.97,1.0), uCondenseView);
-                float vaporGhost = clamp(0.30 + 0.50*smoothstep(120.0,6000.0,ppm), 0.30, 0.92);   // v19: more opaque/visible
+                float vaporGhost = clamp(0.12 + 0.80*smoothstep(40.0,1500.0,ppm), 0.12, 0.92);   // v45: opacity tracks concentration (low ppm = optically thin). Dilute aged leading edge 0.30->~0.12 so it reads as a faint wisp not a saturated pale blob; ~500 ppm body stays ~0.31; dense core still caps 0.92. Colour ramp UNCHANGED -- alpha only. (was v19: clamp(0.30+0.50*smoothstep(120,6000,ppm),0.30,0.92))
                 float vis = mix(vaporGhost, condense, uCondenseView);
 
                 float fadeIn=smoothstep(0.0,4.0,age);   // v18: become visible almost at the source (was 30s -> cloud looked detached)
@@ -2346,9 +2645,9 @@ document.body.insertAdjacentHTML('beforeend', "<div id=\"ui-panel\">\n  <h2>Styr
 
         const MAX_PARTICLES=120000;
         const geometry=new THREE.BufferGeometry();
-        const birthTimes=new Float32Array(MAX_PARTICLES),angles=new Float32Array(MAX_PARTICLES),seeds=new Float32Array(MAX_PARTICLES),uni=new Float32Array(MAX_PARTICLES),gz=new Float32Array(MAX_PARTICLES),dist=new Float32Array(MAX_PARTICLES),conc=new Float32Array(MAX_PARTICLES);   // v29.2: conc = per-parcel field vol-fraction for colour
+        const birthTimes=new Float32Array(MAX_PARTICLES),angles=new Float32Array(MAX_PARTICLES),seeds=new Float32Array(MAX_PARTICLES),uni=new Float32Array(MAX_PARTICLES),gz=new Float32Array(MAX_PARTICLES),dist=new Float32Array(MAX_PARTICLES),conc=new Float32Array(MAX_PARTICLES),birthConc=new Float32Array(MAX_PARTICLES);   // v29.2: conc = per-parcel field vol-fraction for colour; v43: birthConc = source strength (g/s) stamped at spawn for Lagrangian colour memory
         function randn(){let u=0,v=0;while(u===0)u=Math.random();while(v===0)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
-        for(let i=0;i<MAX_PARTICLES;i++){ birthTimes[i]=-99999.0; angles[i]=Math.random()*Math.PI*2; seeds[i]=Math.random()*500.0; uni[i]=Math.random()*2-1; gz[i]=Math.max(-2.8,Math.min(2.8,randn())); conc[i]=-1.0; }
+        for(let i=0;i<MAX_PARTICLES;i++){ birthTimes[i]=-99999.0; angles[i]=Math.random()*Math.PI*2; seeds[i]=Math.random()*500.0; uni[i]=Math.random()*2-1; gz[i]=Math.max(-2.8,Math.min(2.8,randn())); conc[i]=-1.0; birthConc[i]=-1.0; }
         geometry.setAttribute('position',new THREE.BufferAttribute(new Float32Array(MAX_PARTICLES*3),3));
         geometry.setAttribute('aBirthTime',new THREE.BufferAttribute(birthTimes,1));
         geometry.setAttribute('aAngle',new THREE.BufferAttribute(angles,1));
@@ -2357,6 +2656,7 @@ document.body.insertAdjacentHTML('beforeend', "<div id=\"ui-panel\">\n  <h2>Styr
         geometry.setAttribute('aGz',new THREE.BufferAttribute(gz,1));
         geometry.setAttribute('aDist',new THREE.BufferAttribute(dist,1));
         geometry.setAttribute('aConc',new THREE.BufferAttribute(conc,1));   // v29.2: field concentration -> colour
+        geometry.setAttribute('aBirthConc',new THREE.BufferAttribute(birthConc,1));   // v43: birth-time source strength (g/s) carried for Lagrangian colour memory (JS-only; shader unchanged)
         geometry.setDrawRange(0,0);
 
         const zeros=new Array(N_SLAB).fill(0);
@@ -2373,9 +2673,10 @@ document.body.insertAdjacentHTML('beforeend', "<div id=\"ui-panel\">\n  <h2>Styr
 
         const VIS_K=110;   // v19: higher emission density so the plume reads as a full cloud
         let spawnIdx=0, gTime=0, totalSpawned=0, massKg=0, ventActive=true, eventReal=0, lastQ_gs=1.0, running=false;
+        let __eventMinNow=0;   // v41: current event-minutes, refreshed each frame by __dispUpdate; read by the wind(t) playback (applyWindT)
         const bAttr=geometry.attributes.aBirthTime;
         function inject(rate_kgs,dtReal){ if(!ventActive||rate_kgs<=0)return; const sr=Math.min(2500,rate_kgs*VIS_K); const n=Math.floor(dtReal*sr); if(n<=0)return;
-            for(let i=0;i<n;i++){ bAttr.array[spawnIdx]=gTime; spawnIdx=(spawnIdx+1)%MAX_PARTICLES; } totalSpawned+=n;
+            for(let i=0;i<n;i++){ bAttr.array[spawnIdx]=gTime; birthConc[spawnIdx]=lastQ_gs; spawnIdx=(spawnIdx+1)%MAX_PARTICLES; } totalSpawned+=n;   // v43: stamp the live source strength (g/s) at birth
             bAttr.needsUpdate=true; const live=Math.min(totalSpawned,MAX_PARTICLES); if(live>geometry.drawRange.count) geometry.setDrawRange(0,live); }
         function resetSim(){ for(let i=0;i<MAX_PARTICLES;i++) bAttr.array[i]=-99999.0; bAttr.needsUpdate=true; geometry.setDrawRange(0,0); spawnIdx=0; gTime=0; totalSpawned=0; massKg=0; ventActive=true; eventReal=0; }
 
@@ -2594,7 +2895,59 @@ document.body.insertAdjacentHTML('beforeend', "<div id=\"ui-panel\">\n  <h2>Styr
             // (valley walls) fully channels; gentle ground keeps the synoptic direction, so the plume
             // follows the major valleys instead of wiggling on every bump.
             const WF_DEFLECT=3.0, WF_DRAIN=0.5, WF_SLOPE_REF=0.6, WF_SPEED_CAP=1.25;
+
+            // ==================================================================================
+            // v41 — QUASI-STATIC TIME-VARYING AMBIENT WIND  wind(t).
+            // ---------------------------------------------------------------------------------
+            // EDIT THE WIND HERE. WINDT is the wind(t) time series, sampled by event-minutes
+            // (eventMin 0 = release onset 02:42 IST). Each row: { min, dir, spd } where
+            //   dir = ambient wind bearing the wind blows FROM (deg, 0=N, 90=E, matching the
+            //         windDir slider), spd = ambient speed (m/s, matching the windSpeed slider).
+            // The default is a GENTLE DIRECTION SWEEP (NW -> W -> SSW) at a visible speed so the
+            // particle cloud is seen to bend as the field rotates. Add/remove/retime rows freely;
+            // values are linearly interpolated (dir on the shortest arc, speed linearly).
+            //
+            // HONESTY NOTE (see provenance ledger): this is QUASI-STATIC. Each frame buildSlab is
+            // re-solved at the CURRENT wind and the SLAB contours SNAP to it — they do not trail a
+            // curved ribbon. The Lagrangian particle cloud (advectParticles) does bend genuinely.
+            // ==================================================================================
+            let WINDT_PLAYBACK=false;   // v41: default OFF -> static-slider mode == exact v40 behaviour
+            const WINDT=[
+              { min:   0, dir: 315, spd: 1.6 },   // onset — from NW
+              { min:  60, dir: 300, spd: 1.8 },   // +1 h  — backing toward WNW
+              { min: 120, dir: 270, spd: 2.0 },   // +2 h  — from W
+              { min: 180, dir: 240, spd: 2.0 },   // +3 h  — from WSW
+              { min: 240, dir: 210, spd: 1.8 }    // +4 h  — from SSW
+            ];
+            const __lerpAngWT=(a,b,t)=>{ const d=((b-a+540)%360)-180; return (a+d*t+360)%360; };   // shortest-arc angle lerp
+            function windTAt(min){
+              if(min<=WINDT[0].min) return { dir:WINDT[0].dir, spd:WINDT[0].spd };
+              const L=WINDT[WINDT.length-1]; if(min>=L.min) return { dir:L.dir, spd:L.spd };
+              for(let i=0;i<WINDT.length-1;i++){ const A=WINDT[i], B=WINDT[i+1];
+                if(min>=A.min && min<=B.min){ const t=(min-A.min)/(B.min-A.min);
+                  return { dir:__lerpAngWT(A.dir,B.dir,t), spd:A.spd+(B.spd-A.spd)*t }; } }
+              return { dir:L.dir, spd:L.spd };
+            }
+            function windTActive(){ return WINDT_PLAYBACK && running; }
+            // applyWindT(): when playback is active, push the current wind(t) sample into BOTH the
+            // sliders (so they reflect it) AND the uniforms (so refresh()/buildSlab see it). Called
+            // at the top of buildWindField (the __buildWindField hook) so the field tracks wind(t).
+            function applyWindT(){
+              if(!windTActive()) return;
+              const s=windTAt(__eventMinNow);
+              uniforms.uWindAngle.value=s.dir; uniforms.uWindSpeed.value=s.spd;
+              const wd=document.getElementById('windDir'), wdv=document.getElementById('windDir-val');
+              const ws=document.getElementById('windSpeed'), wsv=document.getElementById('windSpeed-val');
+              if(wd) wd.value=s.dir;
+              if(ws) ws.value=s.spd.toFixed(1);
+              if(typeof setWindLabel==='function'){ try{ setWindLabel(s.dir); }catch(e){} } else if(wdv){ wdv.textContent=Math.round(s.dir)+'°'; }
+              if(wsv) wsv.textContent=s.spd.toFixed(1)+' m/s';
+            }
+            function setWindTPlayback(on){ WINDT_PLAYBACK=!!on; }
+            window.__windTActive=windTActive; window.__applyWindT=applyWindT; window.__windT=WINDT; window.__setWindTPlayback=setWindTPlayback;
+
             function buildWindField(){
+              applyWindT();                                         // v41: wind(t) playback drives the field via this hook
               const ang=parseFloat(document.getElementById('windDir').value);
               const spd=Math.max(parseFloat(document.getElementById('windSpeed').value),0.0);
               if(WF._ang===ang && WF._spd===spd) return;           // memoised: only rebuild on wind change
@@ -2890,12 +3243,25 @@ document.body.insertAdjacentHTML('beforeend', "<div id=\"ui-panel\">\n  <h2>Styr
               // v28 calibration: SLUMP_COEF ties the front speed to sqrt(g'h) (#3); WMIX_RISE scales the
               // wind-driven vertical loft (#4).
               const SLUMP_COEF=0.08, WMIX_RISE=8.0;
+              // v44: along-wind puff-spreading decay length (m). Puff/plume centreline ratio ∝ 1/σx; Pasquill–
+              // Gifford along-wind spread grows ~linearly with downwind distance, σx ≈ σx0 + Kx·x, so the boost
+              // attenuation is φ(x)=σx0/(σx0+Kx·x)=1/(1+x/PUFF_DECAY_M) with PUFF_DECAY_M = σx0/Kx. Taking
+              // σx0≈30 m (initial slug ≈ near-source/tank scale) and Kx≈0.06 (PG D-class along-wind coefficient,
+              // suppressed by dense-gas slumping) → PUFF_DECAY_M≈500 m: the onset boost halves ~500 m downwind
+              // and is largely spent by the 2.5–3.6 km AEGL-1 band. Physically anchored scale (range ~350–700 m),
+              // NOT a free brightness knob.
+              const PUFF_DECAY_M = 500.0;
               for(let i=0;i<count;i++){
                 const birth=bAttr.array[i];
                 const age=ut-birth;
                 if(age<0||age>maxAge) continue;
                 // (re)spawned parcels start as a small puff at the vent, then drift downwind
                 if(pBorn[i]!==birth){
+                  // v43: do NOT reset birthConc here. inject() runs BEFORE __advect() each frame (see
+                  // __dispUpdate), so a recycled slot's birthConc was already stamped this frame with the
+                  // live source strength; wiping it to -1 on rebirth would clobber that fresh stamp and
+                  // permanently drop the parcel back to live-field colour. conc[i]=-1 is fine (it is a
+                  // transient "no field yet" flag, recomputed the same frame by the colour write below).
                   pBorn[i]=birth; dist[i]=0; conc[i]=-1.0;
                   const a0=angles[i], r0=0.4+0.6*Math.abs(uni[i]);
                   tpos[3*i]=Math.cos(a0)*r0; tpos[3*i+2]=Math.sin(a0)*r0; tpos[3*i+1]=OH;
@@ -3010,7 +3376,40 @@ document.body.insertAdjacentHTML('beforeend', "<div id=\"ui-panel\">\n  <h2>Styr
                 if(sNow>dist[i]) dist[i]=sNow;
                 // v29.2: colour from the field's actual concentration at this parcel (taper + downwind-only
                 // + calm-upwind all included), so the upwind nose and cloud edges read their true dilution.
-                conc[i] = F ? F.c : -1.0;
+                // v43: LAGRANGIAN COLOUR MEMORY. F.c is the LIVE field magnitude at the parcel's CURRENT
+                // position (so the downwind dilution SHAPE stays correct). The quasi-steady slab scales ~linearly
+                // with the instantaneous source flux, so the whole field (near AND far) rescaled in lockstep when
+                // the release rate Q(t) swung ~25x -- an unphysical simultaneous brightness shift with no advective
+                // lag (the v42 defect). FIX: rescale the magnitude from the LIVE source strength to the strength
+                // this parcel was BORN into (birthConc, stamped in g/s at inject()). A rate change now only affects
+                // newly-born parcels; old brightness rides downwind = a genuine travelling concentration front.
+                // Colour/opacity ONLY -- the dynamics use F.s/dist, not conc -- so transport is unchanged.
+                // The per-frame EMA is dropped (the rate-driven flicker is removed at the ROOT by birth-stamping);
+                // a single very light low-pass (k=0.1) only softens the discrete field resteps / dilution-shape
+                // changes (no double-smooth). -1 = no field (clear).
+                // v44: AGE/TRAVEL-DECAY the birth-concentration boost (puff vs plume). v43's birthConc/liveQ
+                // boost was STATIC and never decayed, so onset-peak (oldest) parcels saturated the DILUTE
+                // leading edge dark — an inverted gradient / dark rim (colour artifact, not physics). A finite
+                // puff dilutes faster than a steady plume because it ALSO spreads along-wind (C_puff∝M/(σx·σy·σz)
+                // vs C_plume∝Q/(u·σy·σz)). v43 already carries the correct cross-wind dilution shape in F.c; here
+                // we attenuate ONLY the boost-above-the-field by the puff/plume σx factor φ=1/(1+s/PUFF_DECAY_M),
+                // which ->1 at the source and ->0 downwind as the puff spreads, so conc relaxes to the steady-
+                // plume baseline F.c far out. Densest gas stays near/just-downwind of source; a travelling
+                // maximum fades with travel; the leading edge is correctly faint. Colour ONLY.
+                if(F){
+                  const liveQ = Math.max(lastQ_gs, 1e-6);
+                  let cBirth;
+                  if(birthConc[i] > 0){
+                    const r0  = birthConc[i] / liveQ;                 // birth-strength ratio (v43 static boost)
+                    const s   = Math.max(dist[i], 0.0);               // downwind travel since birth (m); dist[i] is the along-plume coord, ~0 at birth
+                    const phi = 1.0 / (1.0 + s / PUFF_DECAY_M);        // puff/plume σx attenuation: 1 at source, ->0 downwind
+                    cBirth = F.c * (1.0 + (r0 - 1.0) * phi);           // boost rides on TOP of the field and fades with travel; relaxes to F.c (steady-plume baseline)
+                  } else {
+                    cBirth = F.c;
+                  }
+                  conc[i] = (conc[i]<0.0) ? cBirth : conc[i] + 0.1*(cBirth - conc[i]);   // keep the single light k=0.1 low-pass; do NOT add a second smoother
+                }
+                else { conc[i] = -1.0; }
                 const gy=(sample(nx+TANK_X,-(nz+TANK_Z))||0);
                 let hgt;
                 if(age<JET){ hgt=OH+Math.sin((age/JET)*1.5708)*1.5; }   // v34c: mechanical vent jet only (no thermal lift)
@@ -3051,8 +3450,30 @@ document.body.insertAdjacentHTML('beforeend', "<div id=\"ui-panel\">\n  <h2>Styr
             const ws=document.getElementById('windSpeed'),wsv=document.getElementById('windSpeed-val');
             ws.addEventListener('input',e=>{const v=parseFloat(e.target.value); uniforms.uWindSpeed.value=v; wsv.textContent=v.toFixed(1)+' m/s'; refresh();});
             document.getElementById('scenario').addEventListener('change',e=>{scenarioKey=e.target.value; if(window.__v22ApplyScenario)window.__v22ApplyScenario(scenarioKey); resetSim(); refresh();});
+            // v43: 3-state transport control (start/resume ▶ · pause ⏸ · restart ↻).
+            //  · Start (from idle): begin the run. · Pause: running=false, NO resetSim -- freeze clock,
+            //    mass, particles and motion in place (gTime + advect are gated on `running` in __dispUpdate).
+            //  · Resume: continue from where paused (no reset, no time jump). · Restart: resetSim() -> idle.
             const btn=document.getElementById('startBtn');
-            btn.addEventListener('click',()=>{ running=!running; resetSim(); btn.textContent=running?'Stop release':'Start release'; btn.classList.toggle('on',running); refresh(); });
+            const restartBtn=document.getElementById('restartBtn');
+            let hasStarted=false;   // distinguishes idle (never started / post-restart) from paused
+            function updateTransportUI(){
+                btn.textContent = running ? '⏸' : '▶';   // ⏸ while running, ▶ when idle/paused
+                btn.title = running ? 'Pause' : (hasStarted ? 'Resume' : 'Start release');
+                btn.setAttribute('aria-label', running ? 'Pause release' : (hasStarted ? 'Resume release' : 'Start release'));
+                btn.classList.toggle('on', running);
+                restartBtn.disabled = !hasStarted;   // restart only enabled once the run has started
+            }
+            btn.addEventListener('click',()=>{
+                if(!running){ running=true; hasStarted=true; }   // start (idle) or resume (paused) -- no reset
+                else { running=false; }                          // pause -- freeze in place, do NOT resetSim
+                updateTransportUI(); refresh();
+            });
+            restartBtn.addEventListener('click',()=>{
+                if(!hasStarted) return;
+                running=false; hasStarted=false; resetSim(); updateTransportUI(); refresh();
+            });
+            updateTransportUI();
             // v38: three independent overlay layers wired through applyOverlayLayers():
             //  · "Map labels & markers" (tgl-maplabels) — place/data/PPM/LEL labels + their contour lines
             //  · "Acute Exposure Guideline Levels" (tgl-aegl) — AEGL fat contours + labels, OFF by default
@@ -3288,6 +3709,9 @@ document.body.insertAdjacentHTML('beforeend', "<div id=\"ui-panel\">\n  <h2>Styr
                 +'<label style="color:#ffb347;">Timeline — observed wind &amp; sensors</label>'
                 +'<label style="display:flex;align-items:center;gap:8px;text-transform:none;color:#cdd6e0;font-size:0.74rem;margin-bottom:8px;">'
                 +'<input type="checkbox" id="v6-obs" checked style="accent-color:#ffb347;width:auto;flex-grow:0;"> Steer cloud by observed wind direction and speed</label>'
+                +'<label style="display:flex;align-items:center;gap:8px;text-transform:none;color:#cdd6e0;font-size:0.74rem;margin-bottom:4px;">'
+                +'<input type="checkbox" id="v6-windt" style="accent-color:#5ad1e0;width:auto;flex-grow:0;"> Time-varying wind (quasi-static playback)</label>'
+                +'<div class="note" style="font-size:9px;color:#8aa0ad;margin:-2px 0 8px;">Off = static sliders (default). On = plays the editable wind(t) table; sliders track it. Contours are per-frame equilibria, not a curved trail.</div>'
                 +'<label>Timeline speed (full run)</label><div class="slider-container">'
                 +'<input type="range" id="v6-speed" min="1" max="8" step="1" value="4">'
                 +'<span id="v6-speed-val" class="value-display">6.0 min</span></div>'
@@ -3295,9 +3719,28 @@ document.body.insertAdjacentHTML('beforeend', "<div id=\"ui-panel\">\n  <h2>Styr
                 +'<div id="v6-sen-read" class="note">Measured styrene (Table 4.12) updates as the clock runs.</div>'
                 +'</div>');
               const cb=document.getElementById('v6-obs');
-              const syncLock=()=>{ ['windDir','windSpeed'].forEach(id=>{ const el=document.getElementById(id); if(el){ el.disabled=v6ObsMode; el.style.opacity=v6ObsMode?0.4:1; } }); };
+              const wtCb=document.getElementById('v6-windt');
+              const wtPlaybackOn=()=>!!(wtCb&&wtCb.checked);
+              const syncLock=()=>{ const lock=v6ObsMode||wtPlaybackOn(); ['windDir','windSpeed'].forEach(id=>{ const el=document.getElementById(id); if(el){ el.disabled=lock; el.style.opacity=lock?0.4:1; } }); };
               cb.addEventListener('change',e=>{ v6ObsMode=e.target.checked; syncLock(); });
               syncLock();
+              // v41: time-varying wind(t) playback toggle. Drives WINDT_PLAYBACK in the outer scope
+              // via the exposed setter; sliders lock and track wind(t) while it is on.
+              if(wtCb){ wtCb.addEventListener('change',e=>{
+                if(window.__setWindTPlayback) window.__setWindTPlayback(e.target.checked);
+                syncLock();
+              }); }
+              // v41: on-screen QUASI-STATIC badge — created hidden, shown only while playback drives the
+              // field (toggled each frame in __dispUpdate). States the limitation honestly on-screen.
+              if(!document.getElementById('windt-badge')){
+                document.body.insertAdjacentHTML('beforeend',
+                  '<div id="windt-badge" style="display:none;position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:50;'
+                  +'background:rgba(40,28,12,0.92);border:1px solid #d98a2b;color:#ffcf8f;font:600 12px/1.35 system-ui,sans-serif;'
+                  +'padding:6px 12px;border-radius:8px;max-width:560px;text-align:center;pointer-events:none;box-shadow:0 2px 10px rgba(0,0,0,0.4);">'
+                  +'⚠ quasi-static wind — contours are per-frame equilibria, not a curved trail'
+                  +'<div style="font-weight:400;font-size:10px;color:#e0b98a;margin-top:2px;">SLAB snaps to the current wind each frame; the particle cloud bends, the contour geometry does not</div>'
+                  +'</div>');
+              }
               const sp=document.getElementById('v6-speed'), spv=document.getElementById('v6-speed-val');
               const showSpeed=()=>{ spv.textContent=(90*v6TimelineSlow/60).toFixed(1)+' min'; };
               sp.addEventListener('input',e=>{ v6TimelineSlow=parseFloat(e.target.value); showSpeed(); });
@@ -3311,7 +3754,7 @@ document.body.insertAdjacentHTML('beforeend', "<div id=\"ui-panel\">\n  <h2>Styr
             }
 
             // default-off layers (start with a clean ground + cloud only)
-            ['tgl-buildings','tgl-water','tgl-lg','tgl-aegl','tgl-overlay','tgl-venk-ward'].forEach(id=>{
+            ['tgl-buildings','tgl-water','tgl-lg','tgl-aegl','tgl-overlay','tgl-venk-ward','tgl-maplabels','tgl-windspeed'].forEach(id=>{
               const el=document.getElementById(id); if(el&&el.checked){ el.checked=false; el.dispatchEvent(new Event('change',{bubbles:true})); }
             });
 
@@ -3335,17 +3778,18 @@ document.body.insertAdjacentHTML('beforeend', "<div id=\"ui-panel\">\n  <h2>Styr
               try{
                 const ow=v6ObsWindAt(min);
                 const osp=v6ObsSpeedAt(min), otemp=v6ObsTempAt(min), ohum=v6ObsHumAt(min);
-                if(running && v6ObsMode){ uniforms.uWindSpeed.value=osp; uniforms.uTemperature.value=otemp; uniforms.uHumidity.value=ohum; }
+                const wtOn = !!(window.__windTActive && window.__windTActive());   // v41: yield to wind(t) playback when it is driving
+                if(running && v6ObsMode && !wtOn){ uniforms.uWindSpeed.value=osp; uniforms.uTemperature.value=otemp; uniforms.uHumidity.value=ohum; }
                 const toDeg=(ow.d+180)%360, r=toDeg*Math.PI/180;
                 arrow.setDirection(new THREE.Vector3(Math.sin(r),0,-Math.cos(r)).normalize());
                 arrowLab.position.set(tx+Math.sin(r)*95, ty+26, tz-Math.cos(r)*95);
-                if(v6ObsMode) uniforms.uWindAngle.value=(180-ow.d+360)%360;
+                if(v6ObsMode && !wtOn) uniforms.uWindAngle.value=(180-ow.d+360)%360;
                 if((f6++%5)===0){
-                  if(running && v6ObsMode){ const wsEl=document.getElementById('windSpeed'), wsvEl=document.getElementById('windSpeed-val'); if(wsEl) wsEl.value=osp; if(wsvEl) wsvEl.textContent=osp.toFixed(2)+' m/s';
+                  if(running && v6ObsMode && !wtOn){ const wsEl=document.getElementById('windSpeed'), wsvEl=document.getElementById('windSpeed-val'); if(wsEl) wsEl.value=osp; if(wsvEl) wsvEl.textContent=osp.toFixed(2)+' m/s';
                     const tEl=document.getElementById('temp'), tvEl=document.getElementById('temp-val'); if(tEl) tEl.value=otemp; if(tvEl) tvEl.textContent=otemp.toFixed(1)+'\u00b0C';
                     const hEl=document.getElementById('humidity'), hvEl=document.getElementById('humidity-val'); if(hEl) hEl.value=ohum; if(hvEl) hvEl.textContent=Math.round(ohum)+'%'; }
                   arrowLab.userData.set('Observed wind · from '+Math.round(ow.d)+'° '+c16(ow.d), '→ toward '+c16(toDeg), '#ffb347');
-                  if(v6ObsMode){ const wd=document.getElementById('windDir'), wv=document.getElementById('windDir-val');
+                  if(v6ObsMode && !wtOn){ const wd=document.getElementById('windDir'), wv=document.getElementById('windDir-val');
                     if(wd) wd.value=(180-ow.d+360)%360; if(wv) wv.textContent=c16(ow.d); }
                   const w=document.getElementById('v6-wind-read');
                   if(w){ const srcTxt = ow.s==='Model' ? 'WRF model (Fig.4b, approx)' : (ow.s==='APPCB' ? 'APPCB obs (Table 4.12)' : 'LGP obs (Table 4.8)');
@@ -3374,7 +3818,11 @@ document.body.insertAdjacentHTML('beforeend', "<div id=\"ui-panel\">\n  <h2>Styr
             // 110x at >=3 m/s. The event clock is independent (eventReal), so only plume motion changes.
             const __spdNow=Math.max(parseFloat(document.getElementById('windSpeed').value)||0,0);
             const __accel=35.0+75.0*Math.min(1.0,__spdNow/3.0);
-            gTime+=dt*__accel; uniforms.uTime.value=gTime;
+            // v43: advance the plume clock ONLY while running so PAUSE truly freezes the scene (ages are
+            // uTime-aBirthTime, so a frozen gTime freezes every parcel in place and resume continues with no
+            // time jump). The uniform is always synced to the current gTime (constant while paused).
+            if(running) gTime+=dt*__accel;
+            uniforms.uTime.value=gTime;
             const tf=PsatBar(uniforms.uTemperature.value)/PSAT_REF;
             // v30: active scenario drives the release. Each scenario differs only in the 02:42-02:57 onset peak pulse.
             const sc=V22.SCENARIOS[scenarioKey];
@@ -3399,8 +3847,11 @@ document.body.insertAdjacentHTML('beforeend', "<div id=\"ui-panel\">\n  <h2>Styr
               if(ventActive&&rate>0) lastQ_gs=rate*1000.0;
               inject(ventActive?rate:0, dt);
             } else { lastQ_gs = Math.max((sc&&sc.rateAt)? sc.rateAt(7) : V22.lossRateKgsAt(7), 1)*1000.0; }   // v33: peak now at onset (min 7 = 02:49)
-            if(window.__advect) window.__advect();
-            if(frame%20===0) refresh();
+            __eventMinNow=eventMin;                                  // v41: expose current event-minutes to the wind(t) playback (applyWindT)
+            const __wtOn = (window.__windTActive && window.__windTActive());
+            if(running && window.__advect) window.__advect();        // v43: gate advection on running so PAUSE halts parcel drift/aging (idle pre-start has no parcels, so the frozen view is just the static scene)
+            if(frame%20===0 || __wtOn) refresh();                    // v41: while wind(t) playback is on, rebuild the SLAB every frame (quasi-static: contours snap to the current wind)
+            { const bd=document.getElementById('windt-badge'); if(bd) bd.style.display=__wtOn?'block':'none'; }   // v41: quasi-static badge shows only during playback
             if(++frame%10===0){
                 timeEl.textContent = running ? formatEventClock(eventMin) : '\u2014';
                 rateEl.textContent = running ? (ventActive?`${rate.toFixed(1)} kg/s`:(massKg>=capKg?'cap reached':'vent ceased')) : 'stopped';
